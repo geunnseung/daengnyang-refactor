@@ -1,5 +1,6 @@
 package com.geunnseung.daengnyangrefactor.auth.domain;
 
+import com.geunnseung.daengnyangrefactor.global.domain.BaseTimeEntity;
 import com.geunnseung.daengnyangrefactor.user.domain.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "refresh_tokens")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class RefreshToken {
+public class RefreshToken extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,10 +38,4 @@ public class RefreshToken {
 
     @Column(nullable = false)
     private boolean revoked;
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
 }
