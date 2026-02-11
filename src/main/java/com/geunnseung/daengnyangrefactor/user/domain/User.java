@@ -29,7 +29,7 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, length = 255)
     private String password;
 
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 10)
     private String nickname;
 
     @Enumerated(EnumType.STRING)
