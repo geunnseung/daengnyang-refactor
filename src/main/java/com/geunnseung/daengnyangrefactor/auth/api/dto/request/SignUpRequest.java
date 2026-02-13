@@ -1,4 +1,4 @@
-package com.geunnseung.daengnyangrefactor.auth.dto.request;
+package com.geunnseung.daengnyangrefactor.auth.api.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
