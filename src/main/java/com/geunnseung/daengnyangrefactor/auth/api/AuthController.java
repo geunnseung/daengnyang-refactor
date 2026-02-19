@@ -1,6 +1,8 @@
 package com.geunnseung.daengnyangrefactor.auth.api;
 
+import com.geunnseung.daengnyangrefactor.auth.api.dto.request.LogInRequest;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.request.SignUpRequest;
+import com.geunnseung.daengnyangrefactor.auth.api.dto.response.LogInResponse;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.response.SignUpResponse;
 import com.geunnseung.daengnyangrefactor.auth.service.AuthService;
 import jakarta.validation.Valid;
@@ -26,5 +28,14 @@ public class AuthController {
         SignUpResponse response = authService.signUp(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LogInResponse> logIn(
+            @Valid @RequestBody final LogInRequest request
+    ) {
+        LogInResponse response = authService.logIn(request);
+
+        return ResponseEntity.ok(response);
     }
 }

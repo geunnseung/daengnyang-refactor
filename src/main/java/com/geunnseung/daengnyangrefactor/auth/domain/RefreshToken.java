@@ -38,4 +38,21 @@ public class RefreshToken extends BaseTimeEntity {
 
     @Column(nullable = false)
     private boolean revoked;
+
+    public static RefreshToken issue(
+            final User user,
+            final String token,
+            final LocalDateTime expiresAt
+    ) {
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.user = user;
+        refreshToken.token = token;
+        refreshToken.expiresAt = expiresAt;
+        refreshToken.revoked = false;
+        return refreshToken;
+    }
+
+    public void revoke() {
+        this.revoked = true;
+    }
 }
