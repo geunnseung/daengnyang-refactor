@@ -1,6 +1,7 @@
 package com.geunnseung.daengnyangrefactor.auth.api;
 
 import com.geunnseung.daengnyangrefactor.auth.api.dto.request.LogInRequest;
+import com.geunnseung.daengnyangrefactor.auth.api.dto.request.LogOutRequest;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.request.ReissueRequest;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.request.SignUpRequest;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.response.LogInResponse;
@@ -48,5 +49,14 @@ public class AuthController {
         TokenResponse response = authService.reissue(request);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logOut(
+            @Valid @RequestBody final LogOutRequest request
+    ) {
+        authService.logOut(request);
+
+        return ResponseEntity.noContent().build();
     }
 }

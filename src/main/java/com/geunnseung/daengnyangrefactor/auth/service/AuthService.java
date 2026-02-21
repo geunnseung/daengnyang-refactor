@@ -1,6 +1,7 @@
 package com.geunnseung.daengnyangrefactor.auth.service;
 
 import com.geunnseung.daengnyangrefactor.auth.api.dto.request.LogInRequest;
+import com.geunnseung.daengnyangrefactor.auth.api.dto.request.LogOutRequest;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.request.ReissueRequest;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.request.SignUpRequest;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.response.LogInResponse;
@@ -14,6 +15,7 @@ import com.geunnseung.daengnyangrefactor.global.exception.DaengnyangException;
 import com.geunnseung.daengnyangrefactor.global.exception.ErrorCode;
 import com.geunnseung.daengnyangrefactor.user.domain.User;
 import com.geunnseung.daengnyangrefactor.user.repository.UserRepository;
+import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -119,5 +121,15 @@ public class AuthService {
     private void revokeActiveRefreshTokens(final User user) {
         List<RefreshToken> activeRefreshTokens = refreshTokenRepository.findAllByUserAndRevokedFalse(user);
         activeRefreshTokens.forEach(RefreshToken::revoke);
+    }
+
+    public void logOut(@Valid LogOutRequest request) {
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(request.refreshToken())
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.INVALID_REFRESH_TOKEN));
+        if (!refreshToken.isAvailable(LocalDateTime.now())) {
+            throw new DaengnyangException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        refreshToken.revoke();
     }
 }
