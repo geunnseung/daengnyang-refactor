@@ -1,9 +1,11 @@
 package com.geunnseung.daengnyangrefactor.auth.api;
 
 import com.geunnseung.daengnyangrefactor.auth.api.dto.request.LogInRequest;
+import com.geunnseung.daengnyangrefactor.auth.api.dto.request.ReissueRequest;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.request.SignUpRequest;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.response.LogInResponse;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.response.SignUpResponse;
+import com.geunnseung.daengnyangrefactor.auth.api.dto.response.TokenResponse;
 import com.geunnseung.daengnyangrefactor.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +26,7 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<SignUpResponse> signUp(
             @Valid @RequestBody final SignUpRequest request
-            ) {
+    ) {
         SignUpResponse response = authService.signUp(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -35,6 +37,15 @@ public class AuthController {
             @Valid @RequestBody final LogInRequest request
     ) {
         LogInResponse response = authService.logIn(request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reissue")
+    public ResponseEntity<TokenResponse> reissue(
+            @Valid @RequestBody final ReissueRequest request
+    ) {
+        TokenResponse response = authService.reissue(request);
 
         return ResponseEntity.ok(response);
     }

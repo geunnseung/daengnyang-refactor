@@ -1,9 +1,11 @@
 package com.geunnseung.daengnyangrefactor.auth.service;
 
 import com.geunnseung.daengnyangrefactor.auth.api.dto.request.LogInRequest;
+import com.geunnseung.daengnyangrefactor.auth.api.dto.request.ReissueRequest;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.request.SignUpRequest;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.response.LogInResponse;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.response.SignUpResponse;
+import com.geunnseung.daengnyangrefactor.auth.api.dto.response.TokenResponse;
 import com.geunnseung.daengnyangrefactor.auth.domain.RefreshToken;
 import com.geunnseung.daengnyangrefactor.auth.repository.RefreshTokenRepository;
 import com.geunnseung.daengnyangrefactor.auth.token.AccessTokenProvider;
@@ -12,7 +14,7 @@ import com.geunnseung.daengnyangrefactor.global.exception.DaengnyangException;
 import com.geunnseung.daengnyangrefactor.global.exception.ErrorCode;
 import com.geunnseung.daengnyangrefactor.user.domain.User;
 import com.geunnseung.daengnyangrefactor.user.repository.UserRepository;
-import jakarta.validation.Valid;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,7 +34,7 @@ public class AuthService {
 
     @Transactional
     public SignUpResponse signUp(final SignUpRequest request) {
-        if(userRepository.existsByEmail(request.email())) {
+        if (userRepository.existsByEmail(request.email())) {
             throw new DaengnyangException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
@@ -72,11 +74,44 @@ public class AuthService {
         );
         refreshTokenRepository.save(refreshToken);
 
+        TokenResponse tokenResponse = new TokenResponse(
+                accessToken,
+                refreshTokenValue,
+                "Bearer"
+        );
+
         return new LogInResponse(
                 user.getId(),
                 user.getNickname(),
+                tokenResponse
+        );
+    }
+
+    @Transactional
+    public TokenResponse reissue(final ReissueRequest request) {
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(request.refreshToken())
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.INVALID_REFRESH_TOKEN));
+        if (!refreshToken.isAvailable(LocalDateTime.now())) {
+            throw new DaengnyangException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        User user = refreshToken.getUser();
+
+        refreshToken.revoke();
+
+        String accessToken = accessTokenProvider.createToken(user);
+        String newRefreshToken = refreshTokenProvider.createToken();
+
+        RefreshToken issuedRefreshToken = RefreshToken.issue(
+                user,
+                newRefreshToken,
+                refreshTokenProvider.calculateExpiresAt()
+        );
+        refreshTokenRepository.save(issuedRefreshToken);
+
+        return new TokenResponse(
                 accessToken,
-                refreshTokenValue,
+                newRefreshToken,
                 "Bearer"
         );
     }
