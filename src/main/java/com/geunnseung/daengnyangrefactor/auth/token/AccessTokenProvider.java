@@ -1,6 +1,10 @@
 package com.geunnseung.daengnyangrefactor.auth.token;
 
+import com.geunnseung.daengnyangrefactor.global.exception.DaengnyangException;
+import com.geunnseung.daengnyangrefactor.global.exception.ErrorCode;
 import com.geunnseung.daengnyangrefactor.user.domain.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -34,5 +38,31 @@ public class AccessTokenProvider {
                 .expiration(Date.from(expiresAt))
                 .signWith(secretKey)
                 .compact();
+    }
+
+    public void validateToken(final String token) {
+        parseClaims(token);
+    }
+
+    public Long getUserId(final String token) {
+        String subject = parseClaims(token).getSubject();
+
+        try {
+            return Long.valueOf(subject);
+        } catch (NumberFormatException exception) {
+            throw new DaengnyangException(ErrorCode.INVALID_ACCESS_TOKEN, exception);
+        }
+    }
+
+    private Claims parseClaims(final String token) {
+        try {
+            return Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (JwtException | IllegalArgumentException exception) {
+            throw new DaengnyangException(ErrorCode.INVALID_ACCESS_TOKEN, exception);
+        }
     }
 }
