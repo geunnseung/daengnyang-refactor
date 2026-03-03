@@ -4,12 +4,14 @@ import com.geunnseung.daengnyangrefactor.global.exception.DaengnyangException;
 import com.geunnseung.daengnyangrefactor.global.exception.ErrorCode;
 import com.geunnseung.daengnyangrefactor.group.api.dto.request.GroupCreateRequest;
 import com.geunnseung.daengnyangrefactor.group.api.dto.response.GroupCreateResponse;
+import com.geunnseung.daengnyangrefactor.group.api.dto.response.MyGroupResponse;
 import com.geunnseung.daengnyangrefactor.group.domain.Group;
 import com.geunnseung.daengnyangrefactor.group.domain.UserGroup;
 import com.geunnseung.daengnyangrefactor.group.repository.GroupRepository;
 import com.geunnseung.daengnyangrefactor.group.repository.UserGroupRepository;
 import com.geunnseung.daengnyangrefactor.user.domain.User;
 import com.geunnseung.daengnyangrefactor.user.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,5 +51,21 @@ public class GroupService {
                 group.getId(),
                 group.getName()
         );
+    }
+
+    public List<MyGroupResponse> getMyGroups(final Long userId) {
+        return userGroupRepository.findAllWithGroupByUserId((userId))
+                .stream()
+                .map(userGroup -> {
+                    Group group = userGroup.getGroup();
+
+                    return new MyGroupResponse(
+                            group.getId(),
+                            group.getName(),
+                            group.getDescription(),
+                            userGroup.getRole()
+                    );
+                })
+                .toList();
     }
 }
