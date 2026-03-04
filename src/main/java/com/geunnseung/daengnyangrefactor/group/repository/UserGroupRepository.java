@@ -2,6 +2,7 @@ package com.geunnseung.daengnyangrefactor.group.repository;
 
 import com.geunnseung.daengnyangrefactor.group.domain.UserGroup;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,4 +19,16 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, Long> {
             order by userGroup.createdAt desc
             """)
     List<UserGroup> findAllWithGroupByUserId(@Param("userId") final Long userId);
+
+    @Query("""
+            select userGroup
+            from UserGroup userGroup
+            join fetch userGroup.group
+            where userGroup.user.id = :userId
+              and userGroup.group.id = :groupId
+            """)
+    Optional<UserGroup> findWithGroupByUserIdAndGroupId(
+            @Param("userId") final Long userId,
+            @Param("groupId") final Long groupId
+    );
 }
