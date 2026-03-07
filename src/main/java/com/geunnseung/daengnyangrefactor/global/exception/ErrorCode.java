@@ -16,7 +16,9 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 유효하지 않습니다."),
     INVALID_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "액세스 토큰이 유효하지 않습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
-    GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "그룹을 찾을 수 없습니다.");
+    GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "그룹을 찾을 수 없습니다."),
+    ALREADY_GROUP_MEMBER(HttpStatus.CONFLICT, "이미 참여 중인 그룹입니다."),
+    GROUP_JOIN_APPLICATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 대기 중인 그룹 참여 신청이 있습니다.");
 
     private final HttpStatus status;
     private final String message;

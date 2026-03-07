@@ -31,4 +31,6 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, Long> {
             @Param("userId") final Long userId,
             @Param("groupId") final Long groupId
     );
+
+    boolean existsByUserIdAndGroupId(final Long userId, final Long groupId);
 }
