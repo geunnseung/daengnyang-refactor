@@ -64,4 +64,19 @@ public class GroupJoinApplicationController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PatchMapping("/{groupId}/join-applications/{groupJoinApplicationId}/reject")
+    public ResponseEntity<GroupJoinApplicationDecisionResponse> rejectJoinApplication(
+            @LoginUser final AuthenticatedUser authenticatedUser,
+            @PathVariable final Long groupId,
+            @PathVariable final Long groupJoinApplicationId
+    ) {
+        GroupJoinApplicationDecisionResponse response = groupJoinApplicationService.rejectJoinApplication(
+                authenticatedUser.id(),
+                groupId,
+                groupJoinApplicationId
+        );
+
+        return ResponseEntity.ok(response);
+    }
 }

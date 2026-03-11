@@ -132,4 +132,35 @@ public class GroupJoinApplicationService {
                 application.getStatus()
         );
     }
+
+    @Transactional
+    public GroupJoinApplicationDecisionResponse rejectJoinApplication(
+            final Long userId,
+            final Long groupId,
+            final Long groupJoinApplicationId
+    ) {
+        UserGroup userGroup = userGroupRepository.findWithGroupByUserIdAndGroupId(userId, groupId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.GROUP_NOT_FOUND));
+
+        if (userGroup.getRole() != UserGroupRole.OWNER) {
+            throw new DaengnyangException(ErrorCode.GROUP_OWNER_REQUIRED);
+        }
+
+        GroupJoinApplication application = groupJoinApplicationRepository.findWithGroupAndRequesterByIdAndGroupId(
+                        groupJoinApplicationId,
+                        groupId
+                )
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.GROUP_JOIN_APPLICATION_NOT_FOUND));
+
+        if (application.getStatus() != GroupJoinApplicationStatus.PENDING) {
+            throw new DaengnyangException(ErrorCode.GROUP_JOIN_APPLICATION_ALREADY_DECIDED);
+        }
+
+        application.reject();
+
+        return new GroupJoinApplicationDecisionResponse(
+                application.getId(),
+                application.getStatus()
+        );
+    }
 }

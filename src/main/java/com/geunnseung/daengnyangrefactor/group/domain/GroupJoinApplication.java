@@ -57,4 +57,8 @@ public class GroupJoinApplication extends BaseTimeEntity {
     public void approve() {
         this.status = GroupJoinApplicationStatus.APPROVED;
     }
+
+    public void reject() {
+        this.status = GroupJoinApplicationStatus.REJECTED;
+    }
 }
