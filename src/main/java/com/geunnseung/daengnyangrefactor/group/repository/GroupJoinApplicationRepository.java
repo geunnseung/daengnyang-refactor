@@ -3,6 +3,7 @@ package com.geunnseung.daengnyangrefactor.group.repository;
 import com.geunnseung.daengnyangrefactor.group.domain.GroupJoinApplication;
 import com.geunnseung.daengnyangrefactor.group.domain.GroupJoinApplicationStatus;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,5 +27,18 @@ public interface GroupJoinApplicationRepository extends JpaRepository<GroupJoinA
     List<GroupJoinApplication> findAllWithRequesterByGroupIdAndStatus(
             @Param("groupId") final Long groupId,
             @Param("status") final GroupJoinApplicationStatus status
+    );
+
+    @Query("""
+            select application
+            from GroupJoinApplication application
+            join fetch application.group
+            join fetch application.requester
+            where application.id = :groupJoinApplicationId
+              and application.group.id = :groupId
+            """)
+    Optional<GroupJoinApplication> findWithGroupAndRequesterByIdAndGroupId(
+            @Param("groupJoinApplicationId") final Long groupJoinApplicationId,
+            @Param("groupId") final Long groupId
     );
 }

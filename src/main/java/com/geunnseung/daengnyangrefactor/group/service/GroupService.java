@@ -40,7 +40,7 @@ public class GroupService {
         );
         groupRepository.save(group);
 
-        UserGroup userGroup = UserGroup.createOwner(
+        UserGroup userGroup = UserGroup.createAsOwner(
                 user,
                 group
         );

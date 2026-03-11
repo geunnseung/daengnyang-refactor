@@ -3,6 +3,7 @@ package com.geunnseung.daengnyangrefactor.group.service;
 import com.geunnseung.daengnyangrefactor.global.exception.DaengnyangException;
 import com.geunnseung.daengnyangrefactor.global.exception.ErrorCode;
 import com.geunnseung.daengnyangrefactor.group.api.dto.response.GroupJoinApplicationCreateResponse;
+import com.geunnseung.daengnyangrefactor.group.api.dto.response.GroupJoinApplicationDecisionResponse;
 import com.geunnseung.daengnyangrefactor.group.api.dto.response.GroupJoinApplicationResponse;
 import com.geunnseung.daengnyangrefactor.group.domain.Group;
 import com.geunnseung.daengnyangrefactor.group.domain.GroupJoinApplication;
@@ -89,5 +90,46 @@ public class GroupJoinApplicationService {
                         application.getCreatedAt()
                 ))
                 .toList();
+    }
+
+    @Transactional
+    public GroupJoinApplicationDecisionResponse approveJoinApplication(
+            final Long userId,
+            final Long groupId,
+            final Long groupJoinApplicationId
+    ) {
+        UserGroup userGroup = userGroupRepository.findWithGroupByUserIdAndGroupId(userId, groupId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.GROUP_NOT_FOUND));
+
+        if (userGroup.getRole() != UserGroupRole.OWNER) {
+            throw new DaengnyangException(ErrorCode.GROUP_OWNER_REQUIRED);
+        }
+
+        GroupJoinApplication application = groupJoinApplicationRepository.findWithGroupAndRequesterByIdAndGroupId(
+                        groupJoinApplicationId,
+                        groupId
+                )
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.GROUP_JOIN_APPLICATION_NOT_FOUND));
+
+        if (application.getStatus() != GroupJoinApplicationStatus.PENDING) {
+            throw new DaengnyangException(ErrorCode.GROUP_JOIN_APPLICATION_ALREADY_DECIDED);
+        }
+
+        if (userGroupRepository.existsByUserIdAndGroupId(application.getRequester().getId(), groupId)) {
+            throw new DaengnyangException(ErrorCode.ALREADY_GROUP_MEMBER);
+        }
+
+        application.approve();
+
+        UserGroup newMember = UserGroup.createAsMember(
+                application.getRequester(),
+                application.getGroup()
+        );
+        userGroupRepository.save(newMember);
+
+        return new GroupJoinApplicationDecisionResponse(
+                application.getId(),
+                application.getStatus()
+        );
     }
 }

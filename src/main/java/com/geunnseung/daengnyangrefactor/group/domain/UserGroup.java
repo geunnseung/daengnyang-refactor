@@ -39,7 +39,7 @@ public class UserGroup extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private UserGroupRole role;
 
-    public static UserGroup createOwner(
+    public static UserGroup createAsOwner(
             final User user,
             final Group group
     ) {
@@ -47,6 +47,17 @@ public class UserGroup extends BaseTimeEntity {
         userGroup.user = user;
         userGroup.group = group;
         userGroup.role = UserGroupRole.OWNER;
+        return userGroup;
+    }
+
+    public static UserGroup createAsMember(
+            final User user,
+            final Group group
+    ) {
+        UserGroup userGroup = new UserGroup();
+        userGroup.user = user;
+        userGroup.group = group;
+        userGroup.role = UserGroupRole.MEMBER;
         return userGroup;
     }
 }
