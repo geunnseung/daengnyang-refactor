@@ -33,4 +33,13 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, Long> {
     );
 
     boolean existsByUserIdAndGroupId(final Long userId, final Long groupId);
+
+    @Query("""
+            select userGroup
+            from UserGroup userGroup
+            join fetch userGroup.user
+            where userGroup.group.id = :groupId
+            order by userGroup.createdAt asc
+            """)
+    List<UserGroup> findAllWithUserByGroupId(@Param("groupId") final Long groupId);
 }

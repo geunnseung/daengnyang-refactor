@@ -5,6 +5,7 @@ import com.geunnseung.daengnyangrefactor.global.exception.ErrorCode;
 import com.geunnseung.daengnyangrefactor.group.api.dto.request.GroupCreateRequest;
 import com.geunnseung.daengnyangrefactor.group.api.dto.response.GroupCreateResponse;
 import com.geunnseung.daengnyangrefactor.group.api.dto.response.GroupDetailResponse;
+import com.geunnseung.daengnyangrefactor.group.api.dto.response.GroupMemberResponse;
 import com.geunnseung.daengnyangrefactor.group.api.dto.response.MyGroupResponse;
 import com.geunnseung.daengnyangrefactor.group.domain.Group;
 import com.geunnseung.daengnyangrefactor.group.domain.UserGroup;
@@ -85,5 +86,23 @@ public class GroupService {
                 group.getDescription(),
                 userGroup.getRole()
         );
+    }
+
+    public List<GroupMemberResponse> getGroupMembers(
+            final Long userId,
+            final Long groupId
+    ) {
+        userGroupRepository.findWithGroupByUserIdAndGroupId(userId, groupId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.GROUP_NOT_FOUND));
+
+        return userGroupRepository.findAllWithUserByGroupId(groupId)
+                .stream()
+                .map(userGroup -> new GroupMemberResponse(
+                        userGroup.getUser().getId(),
+                        userGroup.getUser().getNickname(),
+                        userGroup.getRole(),
+                        userGroup.getCreatedAt()
+                ))
+                .toList();
     }
 }

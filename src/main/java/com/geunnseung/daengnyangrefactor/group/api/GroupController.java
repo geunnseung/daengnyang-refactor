@@ -5,6 +5,7 @@ import com.geunnseung.daengnyangrefactor.auth.support.LoginUser;
 import com.geunnseung.daengnyangrefactor.group.api.dto.request.GroupCreateRequest;
 import com.geunnseung.daengnyangrefactor.group.api.dto.response.GroupCreateResponse;
 import com.geunnseung.daengnyangrefactor.group.api.dto.response.GroupDetailResponse;
+import com.geunnseung.daengnyangrefactor.group.api.dto.response.GroupMemberResponse;
 import com.geunnseung.daengnyangrefactor.group.api.dto.response.MyGroupResponse;
 import com.geunnseung.daengnyangrefactor.group.service.GroupService;
 import jakarta.validation.Valid;
@@ -59,5 +60,18 @@ public class GroupController {
         );
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{groupId}/members")
+    public ResponseEntity<List<GroupMemberResponse>> getGroupMembers(
+            @LoginUser final AuthenticatedUser authenticatedUser,
+            @PathVariable final Long groupId
+    ) {
+        List<GroupMemberResponse> responses = groupService.getGroupMembers(
+                authenticatedUser.id(),
+                groupId
+        );
+
+        return ResponseEntity.ok(responses);
     }
 }
