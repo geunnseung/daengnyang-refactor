@@ -27,6 +27,7 @@ public class GroupController {
 
     private final GroupService groupService;
 
+    /**
     @PostMapping
     public ResponseEntity<GroupCreateResponse> createGroup(
             @LoginUser final AuthenticatedUser authenticatedUser,
@@ -39,6 +40,7 @@ public class GroupController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+     **/
 
     @GetMapping
     public ResponseEntity<List<MyGroupResponse>> getMyGroups(
