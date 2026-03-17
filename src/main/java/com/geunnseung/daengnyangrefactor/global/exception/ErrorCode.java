@@ -21,7 +21,9 @@ public enum ErrorCode {
     GROUP_JOIN_APPLICATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 대기 중인 그룹 참여 신청이 있습니다."),
     GROUP_OWNER_REQUIRED(HttpStatus.FORBIDDEN, "그룹 소유자만 요청할 수 있습니다."),
     GROUP_JOIN_APPLICATION_ALREADY_DECIDED(HttpStatus.CONFLICT, "이미 처리된 그룹 참여 신청입니다."),
-    GROUP_JOIN_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "그룹 참여 신청을 찾을 수 없습니다.");
+    GROUP_JOIN_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "그룹 참여 신청을 찾을 수 없습니다."),
+    PET_NOT_FOUND(HttpStatus.NOT_FOUND, "반려동물을 찾을 수 없습니다."),
+    PET_ALREADY_HAS_GROUP(HttpStatus.CONFLICT, "이미 그룹에 연결된 반려동물입니다.");
 
     private final HttpStatus status;
     private final String message;
