@@ -55,16 +55,22 @@ public class PetService {
     }
 
     public List<MyPetResponse> getMyPets(final Long userId) {
-        return petRepository.findAllByOwnerIdOrderByCreatedAtDesc(userId)
+        return petRepository.findAllWithGroupByOwnerId(userId)
                 .stream()
-                .map(pet -> new MyPetResponse(
-                        pet.getId(),
-                        pet.getName(),
-                        pet.getSpecies(),
-                        pet.getGender(),
-                        pet.getBirthDate(),
-                        pet.getProfileImageUrl()
-                ))
+                .map(pet -> {
+                    Group group = pet.getGroup();
+
+                    return new MyPetResponse(
+                            pet.getId(),
+                            pet.getName(),
+                            pet.getSpecies(),
+                            pet.getGender(),
+                            pet.getBirthDate(),
+                            pet.getProfileImageUrl(),
+                            group == null ? null : group.getId(),
+                            group == null ? null : group.getName()
+                    );
+                })
                 .toList();
     }
 

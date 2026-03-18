@@ -11,6 +11,8 @@ public record MyPetResponse(
         PetSpecies species,
         PetGender gender,
         LocalDate birthDate,
-        String profileImageUrl
+        String profileImageUrl,
+        Long groupId,
+        String groupName
 ) {
 }
