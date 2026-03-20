@@ -21,4 +21,6 @@ public interface PetRepository extends JpaRepository<Pet, Long> {
             order by pet.createdAt desc
             """)
     List<Pet> findAllWithGroupByOwnerId(@Param("ownerId") final Long ownerId);
+
+    Optional<Pet> findByGroupId(final Long groupId);
 }

@@ -11,6 +11,8 @@ import com.geunnseung.daengnyangrefactor.group.domain.Group;
 import com.geunnseung.daengnyangrefactor.group.domain.UserGroup;
 import com.geunnseung.daengnyangrefactor.group.repository.GroupRepository;
 import com.geunnseung.daengnyangrefactor.group.repository.UserGroupRepository;
+import com.geunnseung.daengnyangrefactor.pet.domain.Pet;
+import com.geunnseung.daengnyangrefactor.pet.repository.PetRepository;
 import com.geunnseung.daengnyangrefactor.user.domain.User;
 import com.geunnseung.daengnyangrefactor.user.repository.UserRepository;
 import java.util.List;
@@ -26,6 +28,7 @@ public class GroupService {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final UserGroupRepository userGroupRepository;
+    private final PetRepository petRepository;
 
     @Transactional
     public GroupCreateResponse createGroup(
@@ -56,19 +59,7 @@ public class GroupService {
     }
 
     public List<MyGroupResponse> getMyGroups(final Long userId) {
-        return userGroupRepository.findAllWithGroupByUserId((userId))
-                .stream()
-                .map(userGroup -> {
-                    Group group = userGroup.getGroup();
-
-                    return new MyGroupResponse(
-                            group.getId(),
-                            group.getName(),
-                            group.getDescription(),
-                            userGroup.getRole()
-                    );
-                })
-                .toList();
+        return userGroupRepository.findMyGroupsByUserId(userId);
     }
 
     public GroupDetailResponse getGroup(
@@ -80,11 +71,16 @@ public class GroupService {
 
         Group group = userGroup.getGroup();
 
+        Pet pet = petRepository.findByGroupId(group.getId())
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+
         return new GroupDetailResponse(
                 group.getId(),
                 group.getName(),
                 group.getDescription(),
-                userGroup.getRole()
+                userGroup.getRole(),
+                pet.getId(),
+                pet.getName()
         );
     }
 

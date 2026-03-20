@@ -6,6 +6,8 @@ public record GroupDetailResponse(
         Long id,
         String name,
         String description,
-        UserGroupRole role
+        UserGroupRole role,
+        Long petId,
+        String petName
 ) {
 }

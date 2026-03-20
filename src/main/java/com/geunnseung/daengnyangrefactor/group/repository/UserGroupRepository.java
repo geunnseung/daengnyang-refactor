@@ -1,5 +1,6 @@
 package com.geunnseung.daengnyangrefactor.group.repository;
 
+import com.geunnseung.daengnyangrefactor.group.api.dto.response.MyGroupResponse;
 import com.geunnseung.daengnyangrefactor.group.domain.UserGroup;
 import java.util.List;
 import java.util.Optional;
@@ -42,4 +43,21 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, Long> {
             order by userGroup.createdAt asc
             """)
     List<UserGroup> findAllWithUserByGroupId(@Param("groupId") final Long groupId);
+
+    @Query("""
+            select new com.geunnseung.daengnyangrefactor.group.api.dto.response.MyGroupResponse(
+                group.id,
+                group.name,
+                group.description,
+                userGroup.role,
+                pet.id,
+                pet.name
+            )
+            from UserGroup userGroup
+            join userGroup.group group
+            join Pet pet on pet.group.id = group.id
+            where userGroup.user.id = :userId
+            order by userGroup.createdAt desc
+            """)
+    List<MyGroupResponse> findMyGroupsByUserId(@Param("userId") final Long userId);
 }
