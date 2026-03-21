@@ -83,4 +83,18 @@ public class Pet extends BaseTimeEntity {
     public void assignGroup(final Group group) {
         this.group = group;
     }
+
+    public void updateProfile(
+            final String name,
+            final PetSpecies species,
+            final PetGender gender,
+            final LocalDate birthDate,
+            final String profileImageUrl
+    ) {
+        this.name = name;
+        this.species = species;
+        this.gender = gender;
+        this.birthDate = birthDate;
+        this.profileImageUrl = profileImageUrl;
+    }
 }
