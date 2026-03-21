@@ -23,7 +23,8 @@ public enum ErrorCode {
     GROUP_JOIN_APPLICATION_ALREADY_DECIDED(HttpStatus.CONFLICT, "이미 처리된 그룹 참여 신청입니다."),
     GROUP_JOIN_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "그룹 참여 신청을 찾을 수 없습니다."),
     PET_NOT_FOUND(HttpStatus.NOT_FOUND, "반려동물을 찾을 수 없습니다."),
-    PET_ALREADY_HAS_GROUP(HttpStatus.CONFLICT, "이미 그룹에 연결된 반려동물입니다.");
+    PET_ALREADY_HAS_GROUP(HttpStatus.CONFLICT, "이미 그룹에 연결된 반려동물입니다."),
+    PET_GROUP_LINKED(HttpStatus.CONFLICT, "그룹에 연결된 반려동물은 삭제할 수 없습니다.");
 
     private final HttpStatus status;
     private final String message;

@@ -71,7 +71,7 @@ public class GroupService {
 
         Group group = userGroup.getGroup();
 
-        Pet pet = petRepository.findByGroupId(group.getId())
+        Pet pet = petRepository.findByGroupIdAndDeletedAtIsNull(group.getId())
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
 
         return new GroupDetailResponse(

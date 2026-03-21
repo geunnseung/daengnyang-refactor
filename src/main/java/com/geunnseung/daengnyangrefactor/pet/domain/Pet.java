@@ -15,6 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -52,6 +53,9 @@ public class Pet extends BaseTimeEntity {
 
     @Column(length = 500)
     private String profileImageUrl;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     public static Pet register(
             final User owner,
@@ -96,5 +100,9 @@ public class Pet extends BaseTimeEntity {
         this.gender = gender;
         this.birthDate = birthDate;
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
     }
 }

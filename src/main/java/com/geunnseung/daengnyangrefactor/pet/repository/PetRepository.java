@@ -9,26 +9,28 @@ import org.springframework.data.repository.query.Param;
 
 public interface PetRepository extends JpaRepository<Pet, Long> {
 
-    List<Pet> findAllByOwnerIdOrderByCreatedAtDesc(final Long ownerId);
+    List<Pet> findAllByOwnerIdAndDeletedAtIsNullOrderByCreatedAtDesc(final Long ownerId);
 
-    Optional<Pet> findByIdAndOwnerId(final Long petId, final Long ownerId);
+    Optional<Pet> findByIdAndOwnerIdAndDeletedAtIsNull(final Long petId, final Long ownerId);
 
     @Query("""
             select pet
             from Pet pet
             left join fetch pet.group
             where pet.owner.id = :ownerId
+              and pet.deletedAt is null
             order by pet.createdAt desc
             """)
     List<Pet> findAllWithGroupByOwnerId(@Param("ownerId") final Long ownerId);
 
-    Optional<Pet> findByGroupId(final Long groupId);
+    Optional<Pet> findByGroupIdAndDeletedAtIsNull(final Long groupId);
 
     @Query("""
             select pet
             from Pet pet
             left join fetch pet.group
             where pet.id = :petId
+              and pet.deletedAt is null
             """)
     Optional<Pet> findByIdWithGroup(@Param("petId") final Long petId);
 }

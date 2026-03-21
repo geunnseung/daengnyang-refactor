@@ -82,7 +82,7 @@ public class PetService {
             final Long petId,
             final PetGroupCreateRequest request
     ) {
-        Pet pet = petRepository.findByIdAndOwnerId(petId, userId)
+        Pet pet = petRepository.findByIdAndOwnerIdAndDeletedAtIsNull(petId, userId)
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
 
         if (pet.getGroup() != null) {
@@ -142,7 +142,7 @@ public class PetService {
             final Long petId,
             final PetUpdateRequest request
     ) {
-        Pet pet = petRepository.findByIdAndOwnerId(petId, userId)
+        Pet pet = petRepository.findByIdAndOwnerIdAndDeletedAtIsNull(petId, userId)
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
 
         pet.updateProfile(
@@ -165,5 +165,17 @@ public class PetService {
                 group == null ? null : group.getId(),
                 group == null ? null : group.getName()
         );
+    }
+
+    @Transactional
+    public void deletePet(final Long userId, final Long petId) {
+        Pet pet = petRepository.findByIdAndOwnerIdAndDeletedAtIsNull(petId, userId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+
+        if (pet.getGroup() != null) {
+            throw new DaengnyangException(ErrorCode.PET_GROUP_LINKED);
+        }
+
+        pet.delete();
     }
 }
