@@ -9,6 +9,7 @@ import com.geunnseung.daengnyangrefactor.group.repository.UserGroupRepository;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.request.PetGroupCreateRequest;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.request.PetRegisterRequest;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.response.MyPetResponse;
+import com.geunnseung.daengnyangrefactor.pet.api.dto.response.PetDetailResponse;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.response.PetGroupCreateResponse;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.response.PetRegisterResponse;
 import com.geunnseung.daengnyangrefactor.pet.domain.Pet;
@@ -105,6 +106,32 @@ public class PetService {
                 pet.getId(),
                 group.getId(),
                 group.getName()
+        );
+    }
+
+    public PetDetailResponse getPet(final Long userId, final Long petId) {
+        Pet pet = petRepository.findByIdWithGroup(petId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+
+        Group group = pet.getGroup();
+
+        boolean isOwner = pet.getOwner().getId().equals(userId);
+        boolean isGroupMember = group != null
+                && userGroupRepository.existsByUserIdAndGroupId(userId, group.getId());
+
+        if (!isOwner && !isGroupMember) {
+            throw new DaengnyangException(ErrorCode.PET_NOT_FOUND);
+        }
+
+        return new PetDetailResponse(
+                pet.getId(),
+                pet.getName(),
+                pet.getSpecies(),
+                pet.getGender(),
+                pet.getBirthDate(),
+                pet.getProfileImageUrl(),
+                group == null ? null : group.getId(),
+                group == null ? null : group.getName()
         );
     }
 }

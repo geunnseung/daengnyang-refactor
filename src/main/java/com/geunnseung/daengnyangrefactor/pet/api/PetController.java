@@ -5,6 +5,7 @@ import com.geunnseung.daengnyangrefactor.auth.support.LoginUser;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.request.PetGroupCreateRequest;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.request.PetRegisterRequest;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.response.MyPetResponse;
+import com.geunnseung.daengnyangrefactor.pet.api.dto.response.PetDetailResponse;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.response.PetGroupCreateResponse;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.response.PetRegisterResponse;
 import com.geunnseung.daengnyangrefactor.pet.service.PetService;
@@ -38,6 +39,19 @@ public class PetController {
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/{petId}")
+    public ResponseEntity<PetDetailResponse> getPet(
+            @LoginUser final AuthenticatedUser authenticatedUser,
+            @PathVariable final Long petId
+    ) {
+        PetDetailResponse response = petService.getPet(
+                authenticatedUser.id(),
+                petId
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping

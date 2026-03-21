@@ -23,4 +23,12 @@ public interface PetRepository extends JpaRepository<Pet, Long> {
     List<Pet> findAllWithGroupByOwnerId(@Param("ownerId") final Long ownerId);
 
     Optional<Pet> findByGroupId(final Long groupId);
+
+    @Query("""
+            select pet
+            from Pet pet
+            left join fetch pet.group
+            where pet.id = :petId
+            """)
+    Optional<Pet> findByIdWithGroup(@Param("petId") final Long petId);
 }
