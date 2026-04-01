@@ -35,7 +35,7 @@ public class PetPost extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User author;
 
-    @Column(length = 2000)
+    @Column(length = 1000)
     private String content;
 
     @Column(name = "deleted_at")
@@ -43,10 +43,10 @@ public class PetPost extends BaseTimeEntity {
 
     public static PetPost create(
             final Pet pet,
-            final User author,
+            final User user,
             final String content
     ) {
-        return new PetPost(pet, author, content);
+        return new PetPost(pet, user, content);
     }
 
     private PetPost(

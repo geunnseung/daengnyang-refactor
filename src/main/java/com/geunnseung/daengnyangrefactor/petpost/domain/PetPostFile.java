@@ -51,4 +51,31 @@ public class PetPostFile extends BaseTimeEntity {
 
     @Column(nullable = false)
     private Long fileSize;
+
+    public static PetPostFile create(
+            final PetPost petPost,
+            final PetPostFileType fileType,
+            final String fileUrl,
+            final String objectKey,
+            final String contentType,
+            final Long fileSize
+    ) {
+        return new PetPostFile(petPost, fileType, fileUrl, objectKey, contentType, fileSize);
+    }
+
+    private PetPostFile(
+            final PetPost petPost,
+            final PetPostFileType fileType,
+            final String fileUrl,
+            final String objectKey,
+            final String contentType,
+            final Long fileSize
+    ) {
+        this.petPost = petPost;
+        this.fileType = fileType;
+        this.fileUrl = fileUrl;
+        this.objectKey = objectKey;
+        this.contentType = contentType;
+        this.fileSize = fileSize;
+    }
 }

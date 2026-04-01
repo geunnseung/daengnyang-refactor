@@ -25,7 +25,9 @@ public enum ErrorCode {
     PET_NOT_FOUND(HttpStatus.NOT_FOUND, "반려동물을 찾을 수 없습니다."),
     PET_ALREADY_HAS_GROUP(HttpStatus.CONFLICT, "이미 그룹에 연결된 반려동물입니다."),
     PET_GROUP_LINKED(HttpStatus.CONFLICT, "그룹에 연결된 반려동물은 삭제할 수 없습니다."),
-    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다.");
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),
+    UNSUPPORTED_FILE_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원하지 않는 파일 형식입니다."),
+    FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "파일 크기가 너무 큽니다.");
 
     private final HttpStatus status;
     private final String message;
