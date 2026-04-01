@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -35,6 +36,9 @@ public class PetPost extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User author;
 
+    @Column(name = "record_date", nullable = false)
+    private LocalDate recordDate;
+
     @Column(length = 1000)
     private String content;
 
@@ -44,18 +48,21 @@ public class PetPost extends BaseTimeEntity {
     public static PetPost create(
             final Pet pet,
             final User user,
+            final LocalDate recordDate,
             final String content
     ) {
-        return new PetPost(pet, user, content);
+        return new PetPost(pet, user, recordDate, content);
     }
 
     private PetPost(
             final Pet pet,
             final User author,
+            final LocalDate recordDate,
             final String content
     ) {
         this.pet = pet;
         this.author = author;
+        this.recordDate = recordDate;
         this.content = content;
     }
 }

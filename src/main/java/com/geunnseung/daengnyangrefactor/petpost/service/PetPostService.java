@@ -67,7 +67,7 @@ public class PetPostService {
         PetPostFileType fileType = resolveFileType(file);
         validateFileSize(fileType, file);
 
-        PetPost petPost = PetPost.create(pet, user, request.content());
+        PetPost petPost = PetPost.create(pet, user, request.recordDate(), request.content());
         petPostRepository.save(petPost);
 
         MediaUploadResult uploadResult = mediaStoragePort.store(
@@ -91,9 +91,10 @@ public class PetPostService {
                 petPost.getId(),
                 pet.getId(),
                 user.getId(),
-                petPost.getContent(),
+                petPost.getRecordDate(),
                 fileType,
-                uploadResult.fileUrl()
+                uploadResult.fileUrl(),
+                petPost.getContent()
         );
     }
 
