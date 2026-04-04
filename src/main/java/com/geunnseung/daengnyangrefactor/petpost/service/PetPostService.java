@@ -11,6 +11,8 @@ import com.geunnseung.daengnyangrefactor.pet.domain.Pet;
 import com.geunnseung.daengnyangrefactor.pet.repository.PetRepository;
 import com.geunnseung.daengnyangrefactor.petpost.api.dto.request.PetPostCreateRequest;
 import com.geunnseung.daengnyangrefactor.petpost.api.dto.response.PetPostCreateResponse;
+import com.geunnseung.daengnyangrefactor.petpost.api.dto.response.PetPostDailyResponse;
+import com.geunnseung.daengnyangrefactor.petpost.api.dto.response.PetPostDetailResponse;
 import com.geunnseung.daengnyangrefactor.petpost.domain.PetPost;
 import com.geunnseung.daengnyangrefactor.petpost.domain.PetPostFile;
 import com.geunnseung.daengnyangrefactor.petpost.domain.PetPostFileType;
@@ -18,6 +20,8 @@ import com.geunnseung.daengnyangrefactor.petpost.repository.PetPostFileRepositor
 import com.geunnseung.daengnyangrefactor.petpost.repository.PetPostRepository;
 import com.geunnseung.daengnyangrefactor.user.domain.User;
 import com.geunnseung.daengnyangrefactor.user.repository.UserRepository;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -59,7 +63,7 @@ public class PetPostService {
     ) {
         Pet pet = petRepository.findByIdWithGroup(petId)
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
-        validateWritable(userId, pet);
+        validatePetAccessible(userId, pet);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.USER_NOT_FOUND));
@@ -98,7 +102,42 @@ public class PetPostService {
         );
     }
 
-    private void validateWritable(final Long userId, final Pet pet) {
+    @Transactional(readOnly = true)
+    public PetPostDailyResponse getDailyPetPosts(
+            final Long userId,
+            final Long petId,
+            final LocalDate recordDate
+    ) {
+        Pet pet = petRepository.findByIdWithGroup(petId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        validatePetAccessible(userId, pet);
+
+        List<PetPost> petPosts = petPostRepository.findAllByPetIdAndRecordDateAndDeletedAtIsNullOrderByCreatedAtAsc(
+                petId,
+                recordDate
+        );
+
+        List<PetPostDetailResponse> posts = petPosts.stream()
+                .map(petPost -> {
+                    PetPostFile file = petPostFileRepository.findByPetPostId(petPost.getId())
+                            .orElseThrow(() -> new DaengnyangException(ErrorCode.FILE_NOT_FOUND));
+
+                    return new PetPostDetailResponse(
+                            petPost.getId(),
+                            petPost.getAuthor().getId(),
+                            petPost.getAuthor().getNickname(),
+                            file.getFileType(),
+                            file.getFileUrl(),
+                            petPost.getContent(),
+                            petPost.getCreatedAt()
+                    );
+                })
+                .toList();
+
+        return new PetPostDailyResponse(recordDate, posts);
+    }
+
+    private void validatePetAccessible(final Long userId, final Pet pet) {
         if (pet.getOwner().getId().equals(userId)) {
             return;
         }
