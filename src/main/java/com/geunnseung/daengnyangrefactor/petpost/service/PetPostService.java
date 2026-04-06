@@ -137,6 +137,23 @@ public class PetPostService {
         return new PetPostDailyResponse(recordDate, posts);
     }
 
+    @Transactional
+    public void deletePetPost(
+            final Long userId,
+            final Long petId,
+            final Long petPostId
+    ) {
+        PetPost petPost = petPostRepository.findByIdAndPetIdAndDeletedAtIsNull(
+                        petPostId,
+                        petId
+                )
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_POST_NOT_FOUND));
+
+        validateDeletable(userId, petPost);
+
+        petPost.delete();
+    }
+
     private void validatePetAccessible(final Long userId, final Pet pet) {
         if (pet.getOwner().getId().equals(userId)) {
             return;
@@ -185,5 +202,17 @@ public class PetPostService {
         if (fileSize > maxSize) {
             throw new DaengnyangException(ErrorCode.FILE_TOO_LARGE);
         }
+    }
+
+    private void validateDeletable(final Long userId, final PetPost petPost) {
+        if (petPost.getAuthor().getId().equals(userId)) {
+            return;
+        }
+
+        if (petPost.getPet().getOwner().getId().equals(userId)) {
+            return;
+        }
+
+        throw new DaengnyangException(ErrorCode.PET_POST_ACCESS_DENIED);
     }
 }

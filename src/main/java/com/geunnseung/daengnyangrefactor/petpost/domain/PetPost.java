@@ -65,4 +65,8 @@ public class PetPost extends BaseTimeEntity {
         this.recordDate = recordDate;
         this.content = content;
     }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }
