@@ -11,4 +11,6 @@ public interface PetPostRepository extends JpaRepository<PetPost, Long> {
     List<PetPost> findAllByPetIdAndRecordDateAndDeletedAtIsNullOrderByCreatedAtAsc(Long petId, LocalDate recordDate);
 
     Optional<PetPost> findByIdAndPetIdAndDeletedAtIsNull(Long id, Long petId);
+
+    Optional<PetPost> findByIdAndDeletedAtIsNull(Long id);
 }
