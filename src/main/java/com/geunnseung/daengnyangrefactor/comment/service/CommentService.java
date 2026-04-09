@@ -2,6 +2,7 @@ package com.geunnseung.daengnyangrefactor.comment.service;
 
 import com.geunnseung.daengnyangrefactor.comment.api.dto.request.CommentCreateRequest;
 import com.geunnseung.daengnyangrefactor.comment.api.dto.response.CommentCreateResponse;
+import com.geunnseung.daengnyangrefactor.comment.api.dto.response.CommentResponse;
 import com.geunnseung.daengnyangrefactor.comment.domain.Comment;
 import com.geunnseung.daengnyangrefactor.comment.repository.CommentRepository;
 import com.geunnseung.daengnyangrefactor.global.exception.DaengnyangException;
@@ -13,6 +14,7 @@ import com.geunnseung.daengnyangrefactor.petpost.domain.PetPost;
 import com.geunnseung.daengnyangrefactor.petpost.repository.PetPostRepository;
 import com.geunnseung.daengnyangrefactor.user.domain.User;
 import com.geunnseung.daengnyangrefactor.user.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,6 +53,26 @@ public class CommentService {
                 comment.getContent(),
                 comment.getCreatedAt()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommentResponse> getComments(final Long userId, final Long petPostId) {
+        PetPost petPost = petPostRepository.findByIdAndDeletedAtIsNull(petPostId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_POST_NOT_FOUND));
+        validatePetPostAccessible(userId, petPost);
+
+        List<Comment> comments = commentRepository.findAllWithAuthorByPetPostId(petPostId);
+
+        return comments.stream()
+                .map(comment -> new CommentResponse(
+                        comment.getId(),
+                        comment.getAuthor().getId(),
+                        comment.getAuthor().getNickname(),
+                        comment.getContent(),
+                        comment.getCreatedAt(),
+                        comment.getUpdatedAt()
+                ))
+                .toList();
     }
 
     private void validatePetPostAccessible(final Long userId, final PetPost petPost) {

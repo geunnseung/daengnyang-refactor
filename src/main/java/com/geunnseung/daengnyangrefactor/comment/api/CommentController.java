@@ -4,11 +4,14 @@ import com.geunnseung.daengnyangrefactor.auth.support.AuthenticatedUser;
 import com.geunnseung.daengnyangrefactor.auth.support.LoginUser;
 import com.geunnseung.daengnyangrefactor.comment.api.dto.request.CommentCreateRequest;
 import com.geunnseung.daengnyangrefactor.comment.api.dto.response.CommentCreateResponse;
+import com.geunnseung.daengnyangrefactor.comment.api.dto.response.CommentResponse;
 import com.geunnseung.daengnyangrefactor.comment.service.CommentService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,5 +38,18 @@ public class CommentController {
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<CommentResponse>> getComments(
+            @LoginUser final AuthenticatedUser authenticatedUser,
+            @PathVariable final Long petPostId
+    ) {
+        List<CommentResponse> responses = commentService.getComments(
+                authenticatedUser.id(),
+                petPostId
+        );
+
+        return ResponseEntity.ok(responses);
     }
 }
