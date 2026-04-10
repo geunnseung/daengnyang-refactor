@@ -62,4 +62,8 @@ public class Comment extends BaseTimeEntity {
     public void updateContent(final String content) {
         this.content = content;
     }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }

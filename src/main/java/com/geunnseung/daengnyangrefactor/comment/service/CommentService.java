@@ -102,6 +102,22 @@ public class CommentService {
         );
     }
 
+    @Transactional
+    public void deleteComment(
+            final Long userId,
+            final Long petPostId,
+            final Long commentId
+    ) {
+        Comment comment = commentRepository.findByIdAndPetPostIdAndDeletedAtIsNull(
+                        commentId,
+                        petPostId
+                )
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.COMMENT_NOT_FOUND));
+        validateCommentDeletable(userId, comment);
+
+        comment.delete();
+    }
+
     private void validatePetPostAccessible(final Long userId, final PetPost petPost) {
         Pet pet = petPost.getPet();
         if (pet.getOwner().getId().equals(userId)) {
@@ -118,6 +134,18 @@ public class CommentService {
 
     private void validateCommentAuthor(final Long userId, final Comment comment) {
         if (comment.getAuthor().getId().equals(userId)) {
+            return;
+        }
+
+        throw new DaengnyangException(ErrorCode.COMMENT_ACCESS_DENIED);
+    }
+
+    private void validateCommentDeletable(final Long userId, final Comment comment) {
+        if (comment.getAuthor().getId().equals(userId)) {
+            return;
+        }
+
+        if (comment.getPetPost().getPet().getOwner().getId().equals(userId)) {
             return;
         }
 
