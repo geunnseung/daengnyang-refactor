@@ -1,6 +1,7 @@
 package com.geunnseung.daengnyangrefactor.comment.service;
 
 import com.geunnseung.daengnyangrefactor.comment.api.dto.request.CommentCreateRequest;
+import com.geunnseung.daengnyangrefactor.comment.api.dto.request.CommentUpdateRequest;
 import com.geunnseung.daengnyangrefactor.comment.api.dto.response.CommentCreateResponse;
 import com.geunnseung.daengnyangrefactor.comment.api.dto.response.CommentResponse;
 import com.geunnseung.daengnyangrefactor.comment.domain.Comment;
@@ -75,6 +76,32 @@ public class CommentService {
                 .toList();
     }
 
+    @Transactional
+    public CommentResponse updateComment(
+            final Long userId,
+            final Long petPostId,
+            final Long commentId,
+            final CommentUpdateRequest request
+    ) {
+        Comment comment = commentRepository.findByIdAndPetPostIdAndDeletedAtIsNull(
+                        commentId,
+                        petPostId
+                )
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.COMMENT_NOT_FOUND));
+        validateCommentAuthor(userId, comment);
+
+        comment.updateContent(request.content());
+
+        return new CommentResponse(
+                comment.getId(),
+                comment.getAuthor().getId(),
+                comment.getAuthor().getNickname(),
+                comment.getContent(),
+                comment.getCreatedAt(),
+                comment.getUpdatedAt()
+        );
+    }
+
     private void validatePetPostAccessible(final Long userId, final PetPost petPost) {
         Pet pet = petPost.getPet();
         if (pet.getOwner().getId().equals(userId)) {
@@ -87,5 +114,13 @@ public class CommentService {
         }
 
         throw new DaengnyangException(ErrorCode.PET_POST_NOT_FOUND);
+    }
+
+    private void validateCommentAuthor(final Long userId, final Comment comment) {
+        if (comment.getAuthor().getId().equals(userId)) {
+            return;
+        }
+
+        throw new DaengnyangException(ErrorCode.COMMENT_ACCESS_DENIED);
     }
 }

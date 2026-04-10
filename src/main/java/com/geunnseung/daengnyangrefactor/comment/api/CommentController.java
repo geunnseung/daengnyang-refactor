@@ -3,6 +3,7 @@ package com.geunnseung.daengnyangrefactor.comment.api;
 import com.geunnseung.daengnyangrefactor.auth.support.AuthenticatedUser;
 import com.geunnseung.daengnyangrefactor.auth.support.LoginUser;
 import com.geunnseung.daengnyangrefactor.comment.api.dto.request.CommentCreateRequest;
+import com.geunnseung.daengnyangrefactor.comment.api.dto.request.CommentUpdateRequest;
 import com.geunnseung.daengnyangrefactor.comment.api.dto.response.CommentCreateResponse;
 import com.geunnseung.daengnyangrefactor.comment.api.dto.response.CommentResponse;
 import com.geunnseung.daengnyangrefactor.comment.service.CommentService;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -51,5 +53,22 @@ public class CommentController {
         );
 
         return ResponseEntity.ok(responses);
+    }
+
+    @PatchMapping("/{commentId}")
+    public ResponseEntity<CommentResponse> updateComment(
+            @LoginUser final AuthenticatedUser authenticatedUser,
+            @PathVariable final Long petPostId,
+            @PathVariable final Long commentId,
+            @Valid @RequestBody final CommentUpdateRequest request
+    ) {
+        CommentResponse response = commentService.updateComment(
+                authenticatedUser.id(),
+                petPostId,
+                commentId,
+                request
+        );
+
+        return ResponseEntity.ok(response);
     }
 }

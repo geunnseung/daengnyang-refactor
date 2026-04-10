@@ -30,7 +30,9 @@ public enum ErrorCode {
     FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "파일 크기가 너무 큽니다."),
     FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "파일을 찾을 수 없습니다."),
     PET_POST_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),
-    PET_POST_ACCESS_DENIED(HttpStatus.FORBIDDEN, "게시글을 삭제할 권한이 없습니다.");
+    PET_POST_ACCESS_DENIED(HttpStatus.FORBIDDEN, "게시글을 삭제할 권한이 없습니다."),
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
+    COMMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "댓글에 대한 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String message;
