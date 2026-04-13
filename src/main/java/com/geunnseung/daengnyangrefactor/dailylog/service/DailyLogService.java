@@ -10,6 +10,8 @@ import com.geunnseung.daengnyangrefactor.group.domain.Group;
 import com.geunnseung.daengnyangrefactor.group.repository.UserGroupRepository;
 import com.geunnseung.daengnyangrefactor.pet.domain.Pet;
 import com.geunnseung.daengnyangrefactor.pet.repository.PetRepository;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,6 +61,30 @@ public class DailyLogService {
         return DailyLogResponse.from(dailyLog);
     }
 
+    @Transactional(readOnly = true)
+    public List<DailyLogResponse> getDailyLogsInPeriod(
+            final Long userId,
+            final Long petId,
+            final LocalDate from,
+            final LocalDate to
+    ) {
+        validateDateRange(from, to);
+
+        Pet pet = petRepository.findByIdWithGroup(petId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        validatePetAccessible(userId, pet);
+
+        List<DailyLog> dailyLogs = dailyLogRepository.findAllByPetIdAndRecordDateBetweenOrderByRecordDateAsc(
+                petId,
+                from,
+                to
+        );
+
+        return dailyLogs.stream()
+                .map(DailyLogResponse::from)
+                .toList();
+    }
+
     private void validatePetAccessible(final Long userId, final Pet pet) {
         if (pet.getOwner().getId().equals(userId)) {
             return;
@@ -81,6 +107,12 @@ public class DailyLogService {
     private void validateNotExists(final Long petId, final DailyLogCreateRequest request) {
         if (dailyLogRepository.existsByPetIdAndRecordDate(petId, request.recordDate())) {
             throw new DaengnyangException(ErrorCode.DAILY_LOG_ALREADY_EXISTS);
+        }
+    }
+
+    private void validateDateRange(final LocalDate from, final LocalDate to) {
+        if (from.isAfter(to)) {
+            throw new DaengnyangException(ErrorCode.INVALID_REQUEST);
         }
     }
 }
