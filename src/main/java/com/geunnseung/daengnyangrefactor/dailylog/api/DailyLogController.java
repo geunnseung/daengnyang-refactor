@@ -57,4 +57,19 @@ public class DailyLogController {
 
         return ResponseEntity.ok(responses);
     }
+
+    @GetMapping("/{recordDate}")
+    public ResponseEntity<DailyLogResponse> getDailyLog(
+            @LoginUser final AuthenticatedUser authenticatedUser,
+            @PathVariable final Long petId,
+            @PathVariable final LocalDate recordDate
+    ) {
+        DailyLogResponse response = dailyLogService.getDailyLog(
+                authenticatedUser.id(),
+                petId,
+                recordDate
+        );
+
+        return ResponseEntity.ok(response);
+    }
 }

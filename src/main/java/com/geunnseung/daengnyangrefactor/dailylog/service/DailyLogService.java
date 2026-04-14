@@ -85,6 +85,22 @@ public class DailyLogService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public DailyLogResponse getDailyLog(
+            final Long userId,
+            final Long petId,
+            final LocalDate recordDate
+    ) {
+        Pet pet = petRepository.findByIdWithGroup(petId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        validatePetAccessible(userId, pet);
+
+        DailyLog dailyLog = dailyLogRepository.findByPetIdAndRecordDate(petId, recordDate)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.DAILY_LOG_NOT_FOUND));
+
+        return DailyLogResponse.from(dailyLog);
+    }
+
     private void validatePetAccessible(final Long userId, final Pet pet) {
         if (pet.getOwner().getId().equals(userId)) {
             return;
