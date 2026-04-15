@@ -165,4 +165,38 @@ public class DailyLog extends BaseTimeEntity {
         this.lowActivity = lowActivity;
         this.abnormalNote = abnormalNote;
     }
+
+    public void update(
+            final BigDecimal weightKg,
+            final Integer mealAmountG,
+            final Integer waterAmountMl,
+            final Integer walkDistanceM,
+            final Integer walkDurationMinutes,
+            final Integer sleepDurationMinutes,
+            final Integer stoolCount,
+            final Integer urineCount,
+            final Integer vomitCount,
+            final Integer diarrheaCount,
+            final Boolean medicated,
+            final Boolean coughing,
+            final Boolean poorAppetite,
+            final Boolean lowActivity,
+            final String abnormalNote
+    ) {
+        this.weightKg = weightKg;
+        this.mealAmountG = mealAmountG;
+        this.waterAmountMl = waterAmountMl;
+        this.walkDistanceM = walkDistanceM;
+        this.walkDurationMinutes = walkDurationMinutes;
+        this.sleepDurationMinutes = sleepDurationMinutes;
+        this.stoolCount = stoolCount;
+        this.urineCount = urineCount;
+        this.vomitCount = vomitCount;
+        this.diarrheaCount = diarrheaCount;
+        this.medicated = medicated;
+        this.coughing = coughing;
+        this.poorAppetite = poorAppetite;
+        this.lowActivity = lowActivity;
+        this.abnormalNote = abnormalNote;
+    }
 }

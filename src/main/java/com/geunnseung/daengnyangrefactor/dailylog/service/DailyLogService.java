@@ -1,6 +1,7 @@
 package com.geunnseung.daengnyangrefactor.dailylog.service;
 
 import com.geunnseung.daengnyangrefactor.dailylog.api.dto.request.DailyLogCreateRequest;
+import com.geunnseung.daengnyangrefactor.dailylog.api.dto.request.DailyLogUpdateRequest;
 import com.geunnseung.daengnyangrefactor.dailylog.api.dto.response.DailyLogResponse;
 import com.geunnseung.daengnyangrefactor.dailylog.domain.DailyLog;
 import com.geunnseung.daengnyangrefactor.dailylog.repository.DailyLogRepository;
@@ -101,6 +102,42 @@ public class DailyLogService {
         return DailyLogResponse.from(dailyLog);
     }
 
+    @Transactional
+    public DailyLogResponse updateDailyLog(
+            final Long userId,
+            final Long petId,
+            final LocalDate recordDate,
+            final DailyLogUpdateRequest request
+    ) {
+        Pet pet = petRepository.findByIdWithGroup(petId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        validatePetAccessible(userId, pet);
+        validateHasAnyValue(request);
+
+        DailyLog dailyLog = dailyLogRepository.findByPetIdAndRecordDate(petId, recordDate)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.DAILY_LOG_NOT_FOUND));
+
+        dailyLog.update(
+                request.weightKg(),
+                request.mealAmountG(),
+                request.waterAmountMl(),
+                request.walkDistanceM(),
+                request.walkDurationMinutes(),
+                request.sleepDurationMinutes(),
+                request.stoolCount(),
+                request.urineCount(),
+                request.vomitCount(),
+                request.diarrheaCount(),
+                request.medicated(),
+                request.coughing(),
+                request.poorAppetite(),
+                request.lowActivity(),
+                request.abnormalNote()
+        );
+
+        return DailyLogResponse.from(dailyLog);
+    }
+
     private void validatePetAccessible(final Long userId, final Pet pet) {
         if (pet.getOwner().getId().equals(userId)) {
             return;
@@ -115,6 +152,12 @@ public class DailyLogService {
     }
 
     private void validateHasAnyValue(final DailyLogCreateRequest request) {
+        if (!request.hasAnyValue()) {
+            throw new DaengnyangException(ErrorCode.INVALID_REQUEST);
+        }
+    }
+
+    private void validateHasAnyValue(final DailyLogUpdateRequest request) {
         if (!request.hasAnyValue()) {
             throw new DaengnyangException(ErrorCode.INVALID_REQUEST);
         }
