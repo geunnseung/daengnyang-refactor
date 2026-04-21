@@ -4,6 +4,8 @@ import com.geunnseung.daengnyangrefactor.dailylog.domain.DailyLog;
 import com.geunnseung.daengnyangrefactor.dailylog.repository.DailyLogRepository;
 import com.geunnseung.daengnyangrefactor.global.exception.DaengnyangException;
 import com.geunnseung.daengnyangrefactor.global.exception.ErrorCode;
+import com.geunnseung.daengnyangrefactor.group.domain.Group;
+import com.geunnseung.daengnyangrefactor.group.repository.UserGroupRepository;
 import com.geunnseung.daengnyangrefactor.pet.domain.Pet;
 import com.geunnseung.daengnyangrefactor.pet.repository.PetRepository;
 import com.geunnseung.daengnyangrefactor.report.api.dto.response.ReportResponse;
@@ -28,6 +30,7 @@ public class ReportService {
     private final PetRepository petRepository;
     private final DailyLogRepository dailyLogRepository;
     private final ReportRepository reportRepository;
+    private final UserGroupRepository userGroupRepository;
 
     @Transactional
     public ReportResponse createReport(
@@ -92,6 +95,54 @@ public class ReportService {
         generateReports(ReportType.MONTHLY, periodStart, periodEnd);
     }
 
+    @Transactional(readOnly = true)
+    public ReportResponse getWeeklyReport(
+            final Long userId,
+            final Long petId,
+            final LocalDate date
+    ) {
+        Pet pet = petRepository.findByIdWithGroup(petId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        validatePetAccessible(userId, pet);
+
+        LocalDate periodStart = date.with(DayOfWeek.MONDAY);
+        LocalDate periodEnd = periodStart.plusDays(6);
+
+        Report report = reportRepository.findByPetIdAndTypeAndPeriodStartAndPeriodEnd(
+                        petId,
+                        ReportType.WEEKLY,
+                        periodStart,
+                        periodEnd
+                )
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.REPORT_NOT_FOUND));
+
+        return ReportResponse.from(report);
+    }
+
+    @Transactional(readOnly = true)
+    public ReportResponse getMonthlyReport(
+            final Long userId,
+            final Long petId,
+            final LocalDate date
+    ) {
+        Pet pet = petRepository.findByIdWithGroup(petId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        validatePetAccessible(userId, pet);
+
+        LocalDate periodStart = date.withDayOfMonth(1);
+        LocalDate periodEnd = date.withDayOfMonth(date.lengthOfMonth());
+
+        Report report = reportRepository.findByPetIdAndTypeAndPeriodStartAndPeriodEnd(
+                        petId,
+                        ReportType.MONTHLY,
+                        periodStart,
+                        periodEnd
+                )
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.REPORT_NOT_FOUND));
+
+        return ReportResponse.from(report);
+    }
+
     private void generateReports(
             final ReportType type,
             final LocalDate periodStart,
@@ -121,6 +172,19 @@ public class ReportService {
         if (reportRepository.existsByPetIdAndTypeAndPeriodStartAndPeriodEnd(petId, type, periodStart, periodEnd)) {
             throw new DaengnyangException(ErrorCode.REPORT_ALREADY_EXISTS);
         }
+    }
+
+    private void validatePetAccessible(final Long userId, final Pet pet) {
+        if (pet.getOwner().getId().equals(userId)) {
+            return;
+        }
+
+        Group group = pet.getGroup();
+        if (group != null && userGroupRepository.existsByUserIdAndGroupId(userId, group.getId())) {
+            return;
+        }
+
+        throw new DaengnyangException(ErrorCode.PET_NOT_FOUND);
     }
 
     private ReportStatistics calculateStatistics(final List<DailyLog> dailyLogs) {
