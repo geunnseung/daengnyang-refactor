@@ -15,7 +15,6 @@ import com.geunnseung.daengnyangrefactor.global.exception.DaengnyangException;
 import com.geunnseung.daengnyangrefactor.global.exception.ErrorCode;
 import com.geunnseung.daengnyangrefactor.user.domain.User;
 import com.geunnseung.daengnyangrefactor.user.repository.UserRepository;
-import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AuthService {
+
+    private static final String TOKEN_TYPE = "Bearer";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -56,31 +57,13 @@ public class AuthService {
         );
     }
 
+    @Transactional
     public LogInResponse logIn(final LogInRequest request) {
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.INVALID_LOGIN_CREDENTIALS));
-
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new DaengnyangException(ErrorCode.INVALID_LOGIN_CREDENTIALS);
-        }
+        User user = authenticateUser(request);
 
         revokeActiveRefreshTokens(user);
 
-        String accessToken = accessTokenProvider.createToken(user);
-        String refreshTokenValue = refreshTokenProvider.createToken();
-
-        RefreshToken refreshToken = RefreshToken.issue(
-                user,
-                refreshTokenValue,
-                refreshTokenProvider.calculateExpiresAt()
-        );
-        refreshTokenRepository.save(refreshToken);
-
-        TokenResponse tokenResponse = new TokenResponse(
-                accessToken,
-                refreshTokenValue,
-                "Bearer"
-        );
+        TokenResponse tokenResponse = issueToken(user);
 
         return new LogInResponse(
                 user.getId(),
@@ -91,31 +74,41 @@ public class AuthService {
 
     @Transactional
     public TokenResponse reissue(final ReissueRequest request) {
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(request.refreshToken())
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.INVALID_REFRESH_TOKEN));
-        if (!refreshToken.isAvailable(LocalDateTime.now())) {
-            throw new DaengnyangException(ErrorCode.INVALID_REFRESH_TOKEN);
-        }
-
+        RefreshToken refreshToken = findAvailableRefreshToken(request.refreshToken());
         User user = refreshToken.getUser();
 
         refreshToken.revoke();
 
-        String accessToken = accessTokenProvider.createToken(user);
-        String newRefreshToken = refreshTokenProvider.createToken();
+        return issueToken(user);
+    }
 
-        RefreshToken issuedRefreshToken = RefreshToken.issue(
-                user,
-                newRefreshToken,
-                refreshTokenProvider.calculateExpiresAt()
-        );
-        refreshTokenRepository.save(issuedRefreshToken);
+    @Transactional
+    public void logOut(final LogOutRequest request) {
+        RefreshToken refreshToken = findAvailableRefreshToken(request.refreshToken());
 
-        return new TokenResponse(
-                accessToken,
-                newRefreshToken,
-                "Bearer"
-        );
+        refreshToken.revoke();
+    }
+
+    private User authenticateUser(final LogInRequest request) {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.INVALID_LOGIN_CREDENTIALS));
+
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new DaengnyangException(ErrorCode.INVALID_LOGIN_CREDENTIALS);
+        }
+
+        return user;
+    }
+
+    private RefreshToken findAvailableRefreshToken(final String token) {
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.INVALID_REFRESH_TOKEN));
+
+        if (!refreshToken.isAvailable(LocalDateTime.now())) {
+            throw new DaengnyangException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        return refreshToken;
     }
 
     private void revokeActiveRefreshTokens(final User user) {
@@ -123,13 +116,29 @@ public class AuthService {
         activeRefreshTokens.forEach(RefreshToken::revoke);
     }
 
-    public void logOut(@Valid LogOutRequest request) {
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(request.refreshToken())
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.INVALID_REFRESH_TOKEN));
-        if (!refreshToken.isAvailable(LocalDateTime.now())) {
-            throw new DaengnyangException(ErrorCode.INVALID_REFRESH_TOKEN);
-        }
+    private TokenResponse issueToken(final User user) {
+        String accessToken = accessTokenProvider.createToken(user);
+        String refreshTokenValue = refreshTokenProvider.createToken();
 
-        refreshToken.revoke();
+        saveRefreshToken(user, refreshTokenValue);
+
+        return new TokenResponse(
+                accessToken,
+                refreshTokenValue,
+                TOKEN_TYPE
+        );
+    }
+
+    private void saveRefreshToken(
+            final User user,
+            final String refreshTokenValue
+    ) {
+        RefreshToken refreshToken = RefreshToken.issue(
+                user,
+                refreshTokenValue,
+                refreshTokenProvider.calculateExpiresAt()
+        );
+
+        refreshTokenRepository.save(refreshToken);
     }
 }
