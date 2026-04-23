@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class AccessTokenProvider {
 
+    private static final String ROLE_CLAIM = "role";
+
     private final SecretKey secretKey;
     private final long expirationMillis;
 
@@ -33,15 +35,11 @@ public class AccessTokenProvider {
 
         return Jwts.builder()
                 .subject(String.valueOf(user.getId()))
-                .claim("role", user.getRole().name())
+                .claim(ROLE_CLAIM, user.getRole().name())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiresAt))
                 .signWith(secretKey)
                 .compact();
-    }
-
-    public void validateToken(final String token) {
-        parseClaims(token);
     }
 
     public Long getUserId(final String token) {
