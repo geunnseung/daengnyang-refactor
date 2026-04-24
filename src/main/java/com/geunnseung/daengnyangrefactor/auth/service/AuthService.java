@@ -99,7 +99,7 @@ public class AuthService {
     }
 
     private RefreshToken findAvailableRefreshToken(final String token) {
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
+        RefreshToken refreshToken = refreshTokenRepository.findByTokenForUpdate(token)
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.INVALID_REFRESH_TOKEN));
 
         if (!refreshToken.isAvailable(LocalDateTime.now())) {
