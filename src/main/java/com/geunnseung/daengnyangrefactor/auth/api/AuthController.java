@@ -28,7 +28,7 @@ public class AuthController {
     public ResponseEntity<SignUpResponse> signUp(
             @Valid @RequestBody final SignUpRequest request
     ) {
-        SignUpResponse response = authService.signUp(request);
+        SignUpResponse response = authService.signUp(request.toCommand());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -37,7 +37,7 @@ public class AuthController {
     public ResponseEntity<LogInResponse> logIn(
             @Valid @RequestBody final LogInRequest request
     ) {
-        LogInResponse response = authService.logIn(request);
+        LogInResponse response = authService.logIn(request.toCommand());
 
         return ResponseEntity.ok(response);
     }
@@ -46,7 +46,7 @@ public class AuthController {
     public ResponseEntity<TokenResponse> reissue(
             @Valid @RequestBody final ReissueRequest request
     ) {
-        TokenResponse response = authService.reissue(request);
+        TokenResponse response = authService.reissue(request.refreshToken());
 
         return ResponseEntity.ok(response);
     }
@@ -55,7 +55,7 @@ public class AuthController {
     public ResponseEntity<Void> logOut(
             @Valid @RequestBody final LogOutRequest request
     ) {
-        authService.logOut(request);
+        authService.logOut(request.refreshToken());
 
         return ResponseEntity.noContent().build();
     }

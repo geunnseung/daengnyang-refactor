@@ -1,14 +1,12 @@
 package com.geunnseung.daengnyangrefactor.auth.service;
 
-import com.geunnseung.daengnyangrefactor.auth.api.dto.request.LogInRequest;
-import com.geunnseung.daengnyangrefactor.auth.api.dto.request.LogOutRequest;
-import com.geunnseung.daengnyangrefactor.auth.api.dto.request.ReissueRequest;
-import com.geunnseung.daengnyangrefactor.auth.api.dto.request.SignUpRequest;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.response.LogInResponse;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.response.SignUpResponse;
 import com.geunnseung.daengnyangrefactor.auth.api.dto.response.TokenResponse;
 import com.geunnseung.daengnyangrefactor.auth.domain.RefreshToken;
 import com.geunnseung.daengnyangrefactor.auth.repository.RefreshTokenRepository;
+import com.geunnseung.daengnyangrefactor.auth.service.command.LogInCommand;
+import com.geunnseung.daengnyangrefactor.auth.service.command.SignUpCommand;
 import com.geunnseung.daengnyangrefactor.auth.token.AccessTokenProvider;
 import com.geunnseung.daengnyangrefactor.auth.token.RefreshTokenProvider;
 import com.geunnseung.daengnyangrefactor.global.exception.DaengnyangException;
@@ -36,17 +34,17 @@ public class AuthService {
     private final RefreshTokenProvider refreshTokenProvider;
 
     @Transactional
-    public SignUpResponse signUp(final SignUpRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
+    public SignUpResponse signUp(final SignUpCommand command) {
+        if (userRepository.existsByEmail(command.email())) {
             throw new DaengnyangException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-        String encodedPassword = passwordEncoder.encode(request.password());
+        String encodedPassword = passwordEncoder.encode(command.password());
 
         User user = User.createWithPassword(
-                request.email(),
+                command.email(),
                 encodedPassword,
-                request.nickname()
+                command.nickname()
         );
 
         User savedUser = userRepository.save(user);
@@ -58,8 +56,8 @@ public class AuthService {
     }
 
     @Transactional
-    public LogInResponse logIn(final LogInRequest request) {
-        User user = authenticateUser(request);
+    public LogInResponse logIn(final LogInCommand command) {
+        User user = authenticateUser(command);
 
         revokeActiveRefreshTokens(user);
 
@@ -73,8 +71,8 @@ public class AuthService {
     }
 
     @Transactional
-    public TokenResponse reissue(final ReissueRequest request) {
-        RefreshToken refreshToken = findAvailableRefreshToken(request.refreshToken());
+    public TokenResponse reissue(final String refreshTokenValue) {
+        RefreshToken refreshToken = findAvailableRefreshToken(refreshTokenValue);
         User user = refreshToken.getUser();
 
         refreshToken.revoke();
@@ -83,17 +81,17 @@ public class AuthService {
     }
 
     @Transactional
-    public void logOut(final LogOutRequest request) {
-        RefreshToken refreshToken = findAvailableRefreshToken(request.refreshToken());
+    public void logOut(final String refreshTokenValue) {
+        RefreshToken refreshToken = findAvailableRefreshToken(refreshTokenValue);
 
         refreshToken.revoke();
     }
 
-    private User authenticateUser(final LogInRequest request) {
-        User user = userRepository.findByEmail(request.email())
+    private User authenticateUser(final LogInCommand command) {
+        User user = userRepository.findByEmail(command.email())
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.INVALID_LOGIN_CREDENTIALS));
 
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+        if (!passwordEncoder.matches(command.password(), user.getPassword())) {
             throw new DaengnyangException(ErrorCode.INVALID_LOGIN_CREDENTIALS);
         }
 

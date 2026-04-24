@@ -1,5 +1,6 @@
 package com.geunnseung.daengnyangrefactor.auth.api.dto.request;
 
+import com.geunnseung.daengnyangrefactor.auth.service.command.SignUpCommand;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -19,4 +20,12 @@ public record SignUpRequest(
         @Size(min = 2, max = 10, message = "닉네임은 2자 이상 10자 이하여야 합니다.")
         String nickname
 ) {
+
+    public SignUpCommand toCommand() {
+        return new SignUpCommand(
+                email,
+                password,
+                nickname
+        );
+    }
 }
