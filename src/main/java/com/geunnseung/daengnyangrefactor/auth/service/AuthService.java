@@ -57,7 +57,8 @@ public class AuthService {
 
     @Transactional
     public LogInResponse logIn(final LogInCommand command) {
-        User user = authenticateUser(command);
+        User authenticatedUser = authenticateUser(command);
+        User user = findUserForUpdate(authenticatedUser.getId())
 
         revokeActiveRefreshTokens(user);
 
@@ -138,5 +139,10 @@ public class AuthService {
         );
 
         refreshTokenRepository.save(refreshToken);
+    }
+
+    private User findUserForUpdate(final Long userId) {
+        return userRepository.findByIdForUpdate(userId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.USER_NOT_FOUND));
     }
 }
