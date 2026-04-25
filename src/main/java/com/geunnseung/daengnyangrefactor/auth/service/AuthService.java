@@ -16,6 +16,7 @@ import com.geunnseung.daengnyangrefactor.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,8 +47,7 @@ public class AuthService {
                 encodedPassword,
                 command.nickname()
         );
-
-        User savedUser = userRepository.save(user);
+        User savedUser = saveUser(user);
 
         return new SignUpResponse(
                 savedUser.getId(),
@@ -58,7 +58,7 @@ public class AuthService {
     @Transactional
     public LogInResponse logIn(final LogInCommand command) {
         User authenticatedUser = authenticateUser(command);
-        User user = findUserForUpdate(authenticatedUser.getId())
+        User user = findUserForUpdate(authenticatedUser.getId());
 
         revokeActiveRefreshTokens(user);
 
@@ -86,6 +86,14 @@ public class AuthService {
         RefreshToken refreshToken = findAvailableRefreshToken(refreshTokenValue);
 
         refreshToken.revoke();
+    }
+
+    private User saveUser(final User user) {
+        try {
+            return userRepository.save(user);
+        } catch (DataIntegrityViolationException ex) {
+            throw new DaengnyangException(ErrorCode.EMAIL_ALREADY_EXISTS, ex);
+        }
     }
 
     private User authenticateUser(final LogInCommand command) {
