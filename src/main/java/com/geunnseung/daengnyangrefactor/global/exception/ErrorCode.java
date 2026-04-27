@@ -36,7 +36,8 @@ public enum ErrorCode {
     DAILY_LOG_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 해당 날짜의 상태 기록이 있습니다."),
     DAILY_LOG_NOT_FOUND(HttpStatus.NOT_FOUND, "상태 기록을 찾을 수 없습니다."),
     REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 해당 기간의 리포트가 있습니다."),
-    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "리포트를 찾을 수 없습니다.");
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "리포트를 찾을 수 없습니다."),
+    AUTHENTICATION_REQUIRED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
 
     private final HttpStatus status;
     private final String message;
