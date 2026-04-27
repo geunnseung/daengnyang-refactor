@@ -26,8 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class AuthService {
 
-    private static final String TOKEN_TYPE = "Bearer";
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -49,10 +47,7 @@ public class AuthService {
         );
         User savedUser = saveUser(user);
 
-        return new SignUpResponse(
-                savedUser.getId(),
-                savedUser.getNickname()
-        );
+        return SignUpResponse.from(savedUser);
     }
 
     @Transactional
@@ -64,11 +59,7 @@ public class AuthService {
 
         TokenResponse tokenResponse = issueToken(user);
 
-        return new LogInResponse(
-                user.getId(),
-                user.getNickname(),
-                tokenResponse
-        );
+        return LogInResponse.of(user, tokenResponse);
     }
 
     @Transactional
@@ -129,11 +120,7 @@ public class AuthService {
 
         saveRefreshToken(user, refreshTokenValue);
 
-        return new TokenResponse(
-                accessToken,
-                refreshTokenValue,
-                TOKEN_TYPE
-        );
+        return TokenResponse.bearer(accessToken, refreshTokenValue);
     }
 
     private void saveRefreshToken(
