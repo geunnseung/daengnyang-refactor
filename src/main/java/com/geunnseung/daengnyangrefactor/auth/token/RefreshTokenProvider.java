@@ -1,7 +1,8 @@
 package com.geunnseung.daengnyangrefactor.auth.token;
 
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -29,7 +30,7 @@ public class RefreshTokenProvider {
                 .encodeToString(bytes);
     }
 
-    public LocalDateTime calculateExpiresAt() {
-        return LocalDateTime.now().plusDays(expirationDays);
+    public Instant calculateExpiresAt() {
+        return Instant.now().plus(expirationDays, ChronoUnit.DAYS);
     }
 }

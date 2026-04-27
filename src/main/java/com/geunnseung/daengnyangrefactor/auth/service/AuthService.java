@@ -13,7 +13,7 @@ import com.geunnseung.daengnyangrefactor.global.exception.DaengnyangException;
 import com.geunnseung.daengnyangrefactor.global.exception.ErrorCode;
 import com.geunnseung.daengnyangrefactor.user.domain.User;
 import com.geunnseung.daengnyangrefactor.user.repository.UserRepository;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -111,7 +111,7 @@ public class AuthService {
         RefreshToken refreshToken = refreshTokenRepository.findByTokenForUpdate(token)
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.INVALID_REFRESH_TOKEN));
 
-        if (!refreshToken.isAvailable(LocalDateTime.now())) {
+        if (!refreshToken.isAvailable(Instant.now())) {
             throw new DaengnyangException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
