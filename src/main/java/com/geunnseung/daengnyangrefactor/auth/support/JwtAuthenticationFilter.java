@@ -1,6 +1,7 @@
 package com.geunnseung.daengnyangrefactor.auth.support;
 
 import com.geunnseung.daengnyangrefactor.auth.token.AccessTokenProvider;
+import com.geunnseung.daengnyangrefactor.global.exception.DaengnyangException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +14,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Component
 @RequiredArgsConstructor
@@ -27,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     );
 
     private final AccessTokenProvider accessTokenProvider;
+    private final HandlerExceptionResolver handlerExceptionResolver;
 
     @Override
     protected boolean shouldNotFilter(final HttpServletRequest request) {
@@ -46,18 +49,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String accessToken = authorizationHeader.substring(BEARER_PREFIX.length());
-        Long userId = accessTokenProvider.getUserId(accessToken);
+        try {
+            String accessToken = authorizationHeader.substring(BEARER_PREFIX.length());
+            Long userId = accessTokenProvider.getUserId(accessToken);
 
-        AuthenticatedUser authenticatedUser = new AuthenticatedUser(userId);
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                authenticatedUser,
-                null,
-                List.of()
-        );
+            AuthenticatedUser authenticatedUser = new AuthenticatedUser(userId);
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    authenticatedUser,
+                    null,
+                    List.of()
+            );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        filterChain.doFilter(request, response);
+            filterChain.doFilter(request, response);
+        } catch (DaengnyangException ex) {
+            handlerExceptionResolver.resolveException(request, response, null, ex);
+        }
     }
 }
