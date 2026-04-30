@@ -20,10 +20,6 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.USER_NOT_FOUND));
 
-        return new MeResponse(
-                user.getId(),
-                user.getEmail(),
-                user.getNickname()
-        );
+        return MeResponse.from(user);
     }
 }
