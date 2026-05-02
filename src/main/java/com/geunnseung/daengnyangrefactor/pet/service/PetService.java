@@ -50,29 +50,13 @@ public class PetService {
         );
         petRepository.save(pet);
 
-        return new PetRegisterResponse(
-                pet.getId(),
-                pet.getName()
-        );
+        return PetRegisterResponse.from(pet);
     }
 
     public List<MyPetResponse> getMyPets(final Long userId) {
         return petRepository.findAllWithGroupByOwnerId(userId)
                 .stream()
-                .map(pet -> {
-                    Group group = pet.getGroup();
-
-                    return new MyPetResponse(
-                            pet.getId(),
-                            pet.getName(),
-                            pet.getSpecies(),
-                            pet.getGender(),
-                            pet.getBirthDate(),
-                            pet.getProfileImageUrl(),
-                            group == null ? null : group.getId(),
-                            group == null ? null : group.getName()
-                    );
-                })
+                .map(MyPetResponse::from)
                 .toList();
     }
 
@@ -103,11 +87,7 @@ public class PetService {
 
         pet.assignGroup(group);
 
-        return new PetGroupCreateResponse(
-                pet.getId(),
-                group.getId(),
-                group.getName()
-        );
+        return PetGroupCreateResponse.of(pet, group);
     }
 
     public PetDetailResponse getPet(final Long userId, final Long petId) {
@@ -124,16 +104,7 @@ public class PetService {
             throw new DaengnyangException(ErrorCode.PET_NOT_FOUND);
         }
 
-        return new PetDetailResponse(
-                pet.getId(),
-                pet.getName(),
-                pet.getSpecies(),
-                pet.getGender(),
-                pet.getBirthDate(),
-                pet.getProfileImageUrl(),
-                group == null ? null : group.getId(),
-                group == null ? null : group.getName()
-        );
+        return PetDetailResponse.from(pet);
     }
 
     @Transactional
@@ -153,18 +124,7 @@ public class PetService {
                 request.profileImageUrl()
         );
 
-        Group group = pet.getGroup();
-
-        return new PetDetailResponse(
-                pet.getId(),
-                pet.getName(),
-                pet.getSpecies(),
-                pet.getGender(),
-                pet.getBirthDate(),
-                pet.getProfileImageUrl(),
-                group == null ? null : group.getId(),
-                group == null ? null : group.getName()
-        );
+        return PetDetailResponse.from(pet);
     }
 
     @Transactional
