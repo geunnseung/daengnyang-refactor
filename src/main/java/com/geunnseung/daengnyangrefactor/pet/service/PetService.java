@@ -94,15 +94,7 @@ public class PetService {
         Pet pet = petRepository.findByIdWithGroup(petId)
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
 
-        Group group = pet.getGroup();
-
-        boolean isOwner = pet.getOwner().getId().equals(userId);
-        boolean isGroupMember = group != null
-                && userGroupRepository.existsByUserIdAndGroupId(userId, group.getId());
-
-        if (!isOwner && !isGroupMember) {
-            throw new DaengnyangException(ErrorCode.PET_NOT_FOUND);
-        }
+        validatePetReadable(userId, pet);
 
         return PetDetailResponse.from(pet);
     }
@@ -137,5 +129,17 @@ public class PetService {
         }
 
         pet.delete();
+    }
+
+    private void validatePetReadable(final Long userId, final Pet pet) {
+        Group group = pet.getGroup();
+
+        boolean isOwner = pet.getOwner().getId().equals(userId);
+        boolean isGroupMember = group != null
+                && userGroupRepository.existsByUserIdAndGroupId(userId, group.getId());
+
+        if (!isOwner && !isGroupMember) {
+            throw new DaengnyangException(ErrorCode.PET_NOT_FOUND);
+        }
     }
 }
