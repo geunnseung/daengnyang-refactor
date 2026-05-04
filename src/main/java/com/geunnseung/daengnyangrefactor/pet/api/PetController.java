@@ -10,6 +10,7 @@ import com.geunnseung.daengnyangrefactor.pet.api.dto.response.PetDetailResponse;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.response.PetGroupCreateResponse;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.response.PetRegisterResponse;
 import com.geunnseung.daengnyangrefactor.pet.service.PetService;
+import com.geunnseung.daengnyangrefactor.pet.service.command.PetGroupCreateCommand;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,7 @@ public class PetController {
     ) {
         PetRegisterResponse response = petService.registerPet(
                 authenticatedUser.id(),
-                request
+                request.toCommand()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -75,7 +76,7 @@ public class PetController {
         PetGroupCreateResponse response = petService.createPetGroup(
                 authenticatedUser.id(),
                 petId,
-                request
+                request.toCommand()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -90,7 +91,7 @@ public class PetController {
         PetDetailResponse response = petService.updatePetProfile(
                 authenticatedUser.id(),
                 petId,
-                request
+                request.toCommand()
         );
 
         return ResponseEntity.ok(response);

@@ -2,6 +2,7 @@ package com.geunnseung.daengnyangrefactor.pet.api.dto.request;
 
 import com.geunnseung.daengnyangrefactor.pet.domain.PetGender;
 import com.geunnseung.daengnyangrefactor.pet.domain.PetSpecies;
+import com.geunnseung.daengnyangrefactor.pet.service.command.PetUpdateCommand;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -24,4 +25,14 @@ public record PetUpdateRequest(
         @Size(max = 500, message = "프로필 이미지 URL을 확인해주세요.")
         String profileImageUrl
 ) {
+
+    public PetUpdateCommand toCommand() {
+        return new PetUpdateCommand(
+                name,
+                species,
+                gender,
+                birthDate,
+                profileImageUrl
+        );
+    }
 }

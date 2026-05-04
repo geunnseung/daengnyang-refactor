@@ -6,15 +6,15 @@ import com.geunnseung.daengnyangrefactor.group.domain.Group;
 import com.geunnseung.daengnyangrefactor.group.domain.UserGroup;
 import com.geunnseung.daengnyangrefactor.group.repository.GroupRepository;
 import com.geunnseung.daengnyangrefactor.group.repository.UserGroupRepository;
-import com.geunnseung.daengnyangrefactor.pet.api.dto.request.PetGroupCreateRequest;
-import com.geunnseung.daengnyangrefactor.pet.api.dto.request.PetRegisterRequest;
-import com.geunnseung.daengnyangrefactor.pet.api.dto.request.PetUpdateRequest;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.response.MyPetResponse;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.response.PetDetailResponse;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.response.PetGroupCreateResponse;
 import com.geunnseung.daengnyangrefactor.pet.api.dto.response.PetRegisterResponse;
 import com.geunnseung.daengnyangrefactor.pet.domain.Pet;
 import com.geunnseung.daengnyangrefactor.pet.repository.PetRepository;
+import com.geunnseung.daengnyangrefactor.pet.service.command.PetGroupCreateCommand;
+import com.geunnseung.daengnyangrefactor.pet.service.command.PetRegisterCommand;
+import com.geunnseung.daengnyangrefactor.pet.service.command.PetUpdateCommand;
 import com.geunnseung.daengnyangrefactor.user.domain.User;
 import com.geunnseung.daengnyangrefactor.user.repository.UserRepository;
 import java.util.List;
@@ -35,18 +35,17 @@ public class PetService {
     @Transactional
     public PetRegisterResponse registerPet(
             final Long userId,
-            final PetRegisterRequest request
+            final PetRegisterCommand command
     ) {
-        User owner = userRepository.findById(userId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.USER_NOT_FOUND));
+        User owner = findUser(userId);
 
         Pet pet = Pet.register(
                 owner,
-                request.name(),
-                request.species(),
-                request.gender(),
-                request.birthDate(),
-                request.profileImageUrl()
+                command.name(),
+                command.species(),
+                command.gender(),
+                command.birthDate(),
+                command.profileImageUrl()
         );
         petRepository.save(pet);
 
@@ -64,18 +63,14 @@ public class PetService {
     public PetGroupCreateResponse createPetGroup(
             final Long userId,
             final Long petId,
-            final PetGroupCreateRequest request
+            final PetGroupCreateCommand command
     ) {
-        Pet pet = petRepository.findByIdAndOwnerIdAndDeletedAtIsNull(petId, userId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
-
-        if (pet.getGroup() != null) {
-            throw new DaengnyangException(ErrorCode.PET_ALREADY_HAS_GROUP);
-        }
+        Pet pet = findOwnedPet(userId, petId);
+        validateGroupCreatable(pet);
 
         Group group = Group.create(
-                request.name(),
-                request.description()
+                command.name(),
+                command.description()
         );
         groupRepository.save(group);
 
@@ -93,7 +88,6 @@ public class PetService {
     public PetDetailResponse getPet(final Long userId, final Long petId) {
         Pet pet = petRepository.findByIdWithGroup(petId)
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
-
         validatePetReadable(userId, pet);
 
         return PetDetailResponse.from(pet);
@@ -103,17 +97,15 @@ public class PetService {
     public PetDetailResponse updatePetProfile(
             final Long userId,
             final Long petId,
-            final PetUpdateRequest request
+            final PetUpdateCommand command
     ) {
-        Pet pet = petRepository.findByIdAndOwnerIdAndDeletedAtIsNull(petId, userId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
-
+        Pet pet = findOwnedPet(userId, petId);
         pet.updateProfile(
-                request.name(),
-                request.species(),
-                request.gender(),
-                request.birthDate(),
-                request.profileImageUrl()
+                command.name(),
+                command.species(),
+                command.gender(),
+                command.birthDate(),
+                command.profileImageUrl()
         );
 
         return PetDetailResponse.from(pet);
@@ -121,14 +113,32 @@ public class PetService {
 
     @Transactional
     public void deletePet(final Long userId, final Long petId) {
-        Pet pet = petRepository.findByIdAndOwnerIdAndDeletedAtIsNull(petId, userId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        Pet pet = findOwnedPet(userId, petId);
+        validatePetDeletable(pet);
 
+        pet.delete();
+    }
+
+    private User findUser(final Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private Pet findOwnedPet(final Long userId, final Long petId) {
+        return petRepository.findByIdAndOwnerIdAndDeletedAtIsNull(petId, userId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+    }
+
+    private void validateGroupCreatable(final Pet pet) {
+        if (pet.getGroup() != null) {
+            throw new DaengnyangException(ErrorCode.PET_ALREADY_HAS_GROUP);
+        }
+    }
+
+    private void validatePetDeletable(final Pet pet) {
         if (pet.getGroup() != null) {
             throw new DaengnyangException(ErrorCode.PET_GROUP_LINKED);
         }
-
-        pet.delete();
     }
 
     private void validatePetReadable(final Long userId, final Pet pet) {
