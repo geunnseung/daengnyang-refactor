@@ -59,11 +59,7 @@ public class GroupJoinApplicationService {
         );
         groupJoinApplicationRepository.save(application);
 
-        return new GroupJoinApplicationCreateResponse(
-                application.getId(),
-                group.getId(),
-                application.getStatus()
-        );
+        return GroupJoinApplicationCreateResponse.from(application);
     }
 
     public List<GroupJoinApplicationResponse> getJoinApplications(
@@ -82,13 +78,7 @@ public class GroupJoinApplicationService {
                         GroupJoinApplicationStatus.PENDING
                 )
                 .stream()
-                .map(application -> new GroupJoinApplicationResponse(
-                        application.getId(),
-                        application.getRequester().getId(),
-                        application.getRequester().getNickname(),
-                        application.getStatus(),
-                        application.getCreatedAt()
-                ))
+                .map(GroupJoinApplicationResponse::from)
                 .toList();
     }
 
@@ -127,10 +117,7 @@ public class GroupJoinApplicationService {
         );
         userGroupRepository.save(newMember);
 
-        return new GroupJoinApplicationDecisionResponse(
-                application.getId(),
-                application.getStatus()
-        );
+        return GroupJoinApplicationDecisionResponse.from(application);
     }
 
     @Transactional
@@ -158,9 +145,6 @@ public class GroupJoinApplicationService {
 
         application.reject();
 
-        return new GroupJoinApplicationDecisionResponse(
-                application.getId(),
-                application.getStatus()
-        );
+        return GroupJoinApplicationDecisionResponse.from(application);
     }
 }
