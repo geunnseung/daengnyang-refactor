@@ -61,12 +61,9 @@ public class PetPostService {
             final PetPostCreateRequest request,
             final MultipartFile file
     ) {
-        Pet pet = petRepository.findByIdWithGroup(petId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
-        validatePetAccessible(userId, pet);
+        Pet pet = findAccessiblePet(userId, petId);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.USER_NOT_FOUND));
+        User user = findUser(userId);
 
         PetPostFileType fileType = resolveFileType(file);
         validateFileSize(fileType, file);
@@ -74,12 +71,7 @@ public class PetPostService {
         PetPost petPost = PetPost.create(pet, user, request.recordDate(), request.content());
         petPostRepository.save(petPost);
 
-        MediaUploadResult uploadResult = mediaStoragePort.store(
-                new MediaUploadCommand(
-                        file,
-                        "pet-posts/" + pet.getId() + "/" + petPost.getId()
-                )
-        );
+        MediaUploadResult uploadResult = uploadPetPostFile(pet, petPost, file);
 
         PetPostFile petPostFile = PetPostFile.create(
                 petPost,
@@ -91,15 +83,7 @@ public class PetPostService {
         );
         petPostFileRepository.save(petPostFile);
 
-        return new PetPostCreateResponse(
-                petPost.getId(),
-                pet.getId(),
-                user.getId(),
-                petPost.getRecordDate(),
-                fileType,
-                uploadResult.fileUrl(),
-                petPost.getContent()
-        );
+        return PetPostCreateResponse.of(petPost, petPostFile);
     }
 
     @Transactional(readOnly = true)
@@ -108,9 +92,7 @@ public class PetPostService {
             final Long petId,
             final LocalDate recordDate
     ) {
-        Pet pet = petRepository.findByIdWithGroup(petId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
-        validatePetAccessible(userId, pet);
+        findAccessiblePet(userId, petId);
 
         List<PetPost> petPosts = petPostRepository.findAllByPetIdAndRecordDateAndDeletedAtIsNullOrderByCreatedAtAsc(
                 petId,
@@ -122,19 +104,11 @@ public class PetPostService {
                     PetPostFile file = petPostFileRepository.findByPetPostId(petPost.getId())
                             .orElseThrow(() -> new DaengnyangException(ErrorCode.FILE_NOT_FOUND));
 
-                    return new PetPostDetailResponse(
-                            petPost.getId(),
-                            petPost.getAuthor().getId(),
-                            petPost.getAuthor().getNickname(),
-                            file.getFileType(),
-                            file.getFileUrl(),
-                            petPost.getContent(),
-                            petPost.getCreatedAt()
-                    );
+                    return PetPostDetailResponse.of(petPost, file);
                 })
                 .toList();
 
-        return new PetPostDailyResponse(recordDate, posts);
+        return PetPostDailyResponse.of(recordDate, posts);
     }
 
     @Transactional
@@ -154,6 +128,15 @@ public class PetPostService {
         petPost.delete();
     }
 
+    private Pet findAccessiblePet(final Long userId, final Long petId) {
+        Pet pet = petRepository.findByIdWithGroup(petId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+
+        validatePetAccessible(userId, pet);
+
+        return pet;
+    }
+
     private void validatePetAccessible(final Long userId, final Pet pet) {
         if (pet.getOwner().getId().equals(userId)) {
             return;
@@ -165,6 +148,11 @@ public class PetPostService {
         }
 
         throw new DaengnyangException(ErrorCode.PET_NOT_FOUND);
+    }
+
+    private User findUser(final Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.USER_NOT_FOUND));
     }
 
     private PetPostFileType resolveFileType(final MultipartFile file) {
@@ -202,6 +190,19 @@ public class PetPostService {
         if (fileSize > maxSize) {
             throw new DaengnyangException(ErrorCode.FILE_TOO_LARGE);
         }
+    }
+
+    private MediaUploadResult uploadPetPostFile(
+            final Pet pet,
+            final PetPost petPost,
+            final MultipartFile file
+    ) {
+        return mediaStoragePort.store(
+                new MediaUploadCommand(
+                        file,
+                        "pet-posts/" + pet.getId() + "/" + petPost.getId()
+                )
+        );
     }
 
     private void validateDeletable(final Long userId, final PetPost petPost) {

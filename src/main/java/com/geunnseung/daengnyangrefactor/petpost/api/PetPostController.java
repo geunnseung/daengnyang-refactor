@@ -39,7 +39,7 @@ public class PetPostController {
         PetPostCreateResponse response = petPostService.createPetPost(
                 authenticatedUser.id(),
                 petId,
-                request,
+                request.toCommand(),
                 file
         );
 

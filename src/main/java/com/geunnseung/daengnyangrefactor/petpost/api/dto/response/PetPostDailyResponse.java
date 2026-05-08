@@ -8,4 +8,11 @@ public record PetPostDailyResponse(
         LocalDate recordDate,
         List<PetPostDetailResponse> posts
 ) {
+
+    public static PetPostDailyResponse of(
+            final LocalDate recordDate,
+            final List<PetPostDetailResponse> posts
+    ) {
+        return new PetPostDailyResponse(recordDate, posts);
+    }
 }
