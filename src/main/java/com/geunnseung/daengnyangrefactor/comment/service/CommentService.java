@@ -1,11 +1,11 @@
 package com.geunnseung.daengnyangrefactor.comment.service;
 
-import com.geunnseung.daengnyangrefactor.comment.api.dto.request.CommentCreateRequest;
-import com.geunnseung.daengnyangrefactor.comment.api.dto.request.CommentUpdateRequest;
 import com.geunnseung.daengnyangrefactor.comment.api.dto.response.CommentCreateResponse;
 import com.geunnseung.daengnyangrefactor.comment.api.dto.response.CommentResponse;
 import com.geunnseung.daengnyangrefactor.comment.domain.Comment;
 import com.geunnseung.daengnyangrefactor.comment.repository.CommentRepository;
+import com.geunnseung.daengnyangrefactor.comment.service.command.CommentCreateCommand;
+import com.geunnseung.daengnyangrefactor.comment.service.command.CommentUpdateCommand;
 import com.geunnseung.daengnyangrefactor.global.exception.DaengnyangException;
 import com.geunnseung.daengnyangrefactor.global.exception.ErrorCode;
 import com.geunnseung.daengnyangrefactor.group.domain.Group;
@@ -34,45 +34,28 @@ public class CommentService {
     public CommentCreateResponse createComment(
             final Long userId,
             final Long petPostId,
-            final CommentCreateRequest request
+            final CommentCreateCommand command
     ) {
-        PetPost petPost = petPostRepository.findByIdAndDeletedAtIsNull(petPostId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_POST_NOT_FOUND));
+        PetPost petPost = findPetPost(petPostId);
         validatePetPostAccessible(userId, petPost);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.USER_NOT_FOUND));
+        User user = findUser(userId);
 
-        Comment comment = Comment.create(petPost, user, request.content());
+        Comment comment = Comment.create(petPost, user, command.content());
         commentRepository.save(comment);
 
-        return new CommentCreateResponse(
-                comment.getId(),
-                petPost.getId(),
-                user.getId(),
-                user.getNickname(),
-                comment.getContent(),
-                comment.getCreatedAt()
-        );
+        return CommentCreateResponse.from(comment);
     }
 
     @Transactional(readOnly = true)
     public List<CommentResponse> getComments(final Long userId, final Long petPostId) {
-        PetPost petPost = petPostRepository.findByIdAndDeletedAtIsNull(petPostId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_POST_NOT_FOUND));
+        PetPost petPost = findPetPost(petPostId);
         validatePetPostAccessible(userId, petPost);
 
         List<Comment> comments = commentRepository.findAllWithAuthorByPetPostId(petPostId);
 
         return comments.stream()
-                .map(comment -> new CommentResponse(
-                        comment.getId(),
-                        comment.getAuthor().getId(),
-                        comment.getAuthor().getNickname(),
-                        comment.getContent(),
-                        comment.getCreatedAt(),
-                        comment.getUpdatedAt()
-                ))
+                .map(CommentResponse::from)
                 .toList();
     }
 
@@ -81,25 +64,14 @@ public class CommentService {
             final Long userId,
             final Long petPostId,
             final Long commentId,
-            final CommentUpdateRequest request
+            final CommentUpdateCommand command
     ) {
-        Comment comment = commentRepository.findByIdAndPetPostIdAndDeletedAtIsNull(
-                        commentId,
-                        petPostId
-                )
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.COMMENT_NOT_FOUND));
+        Comment comment = findComment(petPostId, commentId);
         validateCommentAuthor(userId, comment);
 
-        comment.updateContent(request.content());
+        comment.updateContent(command.content());
 
-        return new CommentResponse(
-                comment.getId(),
-                comment.getAuthor().getId(),
-                comment.getAuthor().getNickname(),
-                comment.getContent(),
-                comment.getCreatedAt(),
-                comment.getUpdatedAt()
-        );
+        return CommentResponse.from(comment);
     }
 
     @Transactional
@@ -108,14 +80,15 @@ public class CommentService {
             final Long petPostId,
             final Long commentId
     ) {
-        Comment comment = commentRepository.findByIdAndPetPostIdAndDeletedAtIsNull(
-                        commentId,
-                        petPostId
-                )
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.COMMENT_NOT_FOUND));
+        Comment comment = findComment(petPostId, commentId);
         validateCommentDeletable(userId, comment);
 
         comment.delete();
+    }
+
+    private PetPost findPetPost(final Long petPostId) {
+        return petPostRepository.findByIdAndDeletedAtIsNull(petPostId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_POST_NOT_FOUND));
     }
 
     private void validatePetPostAccessible(final Long userId, final PetPost petPost) {
@@ -130,6 +103,19 @@ public class CommentService {
         }
 
         throw new DaengnyangException(ErrorCode.PET_POST_NOT_FOUND);
+    }
+
+    private User findUser(final Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private Comment findComment(final Long petPostId, final Long commentId) {
+        return commentRepository.findByIdAndPetPostIdAndDeletedAtIsNull(
+                        commentId,
+                        petPostId
+                )
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.COMMENT_NOT_FOUND));
     }
 
     private void validateCommentAuthor(final Long userId, final Comment comment) {

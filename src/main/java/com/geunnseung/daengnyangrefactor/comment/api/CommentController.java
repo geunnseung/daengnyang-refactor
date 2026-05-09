@@ -37,7 +37,7 @@ public class CommentController {
         CommentCreateResponse response = commentService.createComment(
                 authenticatedUser.id(),
                 petPostId,
-                request
+                request.toCommand()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -67,7 +67,7 @@ public class CommentController {
                 authenticatedUser.id(),
                 petPostId,
                 commentId,
-                request
+                request.toCommand()
         );
 
         return ResponseEntity.ok(response);

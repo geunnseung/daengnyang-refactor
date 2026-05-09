@@ -1,5 +1,6 @@
 package com.geunnseung.daengnyangrefactor.comment.api.dto.response;
 
+import com.geunnseung.daengnyangrefactor.comment.domain.Comment;
 import java.time.LocalDateTime;
 
 public record CommentResponse(
@@ -11,4 +12,15 @@ public record CommentResponse(
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
+
+    public static CommentResponse from(final Comment comment) {
+        return new CommentResponse(
+                comment.getId(),
+                comment.getAuthor().getId(),
+                comment.getAuthor().getNickname(),
+                comment.getContent(),
+                comment.getCreatedAt(),
+                comment.getUpdatedAt()
+        );
+    }
 }
