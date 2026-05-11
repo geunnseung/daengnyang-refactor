@@ -39,8 +39,7 @@ public class ReportService {
             final LocalDate periodStart,
             final LocalDate periodEnd
     ) {
-        Pet pet = petRepository.findById(petId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        Pet pet = findPet(petId);
         validateNotExists(petId, type, periodStart, periodEnd);
 
         List<DailyLog> dailyLogs = dailyLogRepository.findAllByPetIdAndRecordDateBetweenOrderByRecordDateAsc(
@@ -101,20 +100,18 @@ public class ReportService {
             final Long petId,
             final LocalDate date
     ) {
-        Pet pet = petRepository.findByIdWithGroup(petId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        Pet pet = findPetWithGroup(petId);
         validatePetAccessible(userId, pet);
 
         LocalDate periodStart = date.with(DayOfWeek.MONDAY);
         LocalDate periodEnd = periodStart.plusDays(6);
 
-        Report report = reportRepository.findByPetIdAndTypeAndPeriodStartAndPeriodEnd(
-                        petId,
-                        ReportType.WEEKLY,
-                        periodStart,
-                        periodEnd
-                )
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.REPORT_NOT_FOUND));
+        Report report = findReport(
+                petId,
+                ReportType.WEEKLY,
+                periodStart,
+                periodEnd
+        );
 
         return ReportResponse.from(report);
     }
@@ -125,22 +122,45 @@ public class ReportService {
             final Long petId,
             final LocalDate date
     ) {
-        Pet pet = petRepository.findByIdWithGroup(petId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        Pet pet = findPetWithGroup(petId);
         validatePetAccessible(userId, pet);
 
         LocalDate periodStart = date.withDayOfMonth(1);
         LocalDate periodEnd = date.withDayOfMonth(date.lengthOfMonth());
 
-        Report report = reportRepository.findByPetIdAndTypeAndPeriodStartAndPeriodEnd(
+        Report report = findReport(
+                petId,
+                ReportType.MONTHLY,
+                periodStart,
+                periodEnd
+        );
+
+        return ReportResponse.from(report);
+    }
+
+    private Pet findPet(final Long petId) {
+        return petRepository.findById(petId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+    }
+
+    private Pet findPetWithGroup(final Long petId) {
+        return petRepository.findByIdWithGroup(petId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+    }
+
+    private Report findReport(
+            final Long petId,
+            final ReportType type,
+            final LocalDate periodStart,
+            final LocalDate periodEnd
+    ) {
+        return reportRepository.findByPetIdAndTypeAndPeriodStartAndPeriodEnd(
                         petId,
-                        ReportType.MONTHLY,
+                        type,
                         periodStart,
                         periodEnd
                 )
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.REPORT_NOT_FOUND));
-
-        return ReportResponse.from(report);
     }
 
     private void generateReports(
