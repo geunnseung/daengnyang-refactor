@@ -38,7 +38,7 @@ public class DailyLogController {
         DailyLogResponse response = dailyLogService.createDailyLog(
                 authenticatedUser.id(),
                 petId,
-                request
+                request.toCommand()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -87,7 +87,7 @@ public class DailyLogController {
                 authenticatedUser.id(),
                 petId,
                 recordDate,
-                request
+                request.toCommand()
         );
 
         return ResponseEntity.ok(response);

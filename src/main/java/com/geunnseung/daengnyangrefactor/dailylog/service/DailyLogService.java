@@ -1,10 +1,10 @@
 package com.geunnseung.daengnyangrefactor.dailylog.service;
 
-import com.geunnseung.daengnyangrefactor.dailylog.api.dto.request.DailyLogCreateRequest;
-import com.geunnseung.daengnyangrefactor.dailylog.api.dto.request.DailyLogUpdateRequest;
 import com.geunnseung.daengnyangrefactor.dailylog.api.dto.response.DailyLogResponse;
 import com.geunnseung.daengnyangrefactor.dailylog.domain.DailyLog;
 import com.geunnseung.daengnyangrefactor.dailylog.repository.DailyLogRepository;
+import com.geunnseung.daengnyangrefactor.dailylog.service.command.DailyLogCreateCommand;
+import com.geunnseung.daengnyangrefactor.dailylog.service.command.DailyLogUpdateCommand;
 import com.geunnseung.daengnyangrefactor.global.exception.DaengnyangException;
 import com.geunnseung.daengnyangrefactor.global.exception.ErrorCode;
 import com.geunnseung.daengnyangrefactor.group.domain.Group;
@@ -30,32 +30,31 @@ public class DailyLogService {
     public DailyLogResponse createDailyLog(
             final Long userId,
             final Long petId,
-            final DailyLogCreateRequest request
+            final DailyLogCreateCommand command
     ) {
-        Pet pet = petRepository.findByIdWithGroup(petId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        Pet pet = findPet(petId);
         validatePetAccessible(userId, pet);
-        validateHasAnyValue(request);
-        validateNotExists(petId, request);
+        validateHasAnyValue(command);
+        validateNotExists(petId, command);
 
         DailyLog dailyLog = DailyLog.create(
                 pet,
-                request.recordDate(),
-                request.weightKg(),
-                request.mealAmountG(),
-                request.waterAmountMl(),
-                request.walkDistanceM(),
-                request.walkDurationMinutes(),
-                request.sleepDurationMinutes(),
-                request.stoolCount(),
-                request.urineCount(),
-                request.vomitCount(),
-                request.diarrheaCount(),
-                request.medicated(),
-                request.coughing(),
-                request.poorAppetite(),
-                request.lowActivity(),
-                request.abnormalNote()
+                command.recordDate(),
+                command.weightKg(),
+                command.mealAmountG(),
+                command.waterAmountMl(),
+                command.walkDistanceM(),
+                command.walkDurationMinutes(),
+                command.sleepDurationMinutes(),
+                command.stoolCount(),
+                command.urineCount(),
+                command.vomitCount(),
+                command.diarrheaCount(),
+                command.medicated(),
+                command.coughing(),
+                command.poorAppetite(),
+                command.lowActivity(),
+                command.abnormalNote()
         );
         dailyLogRepository.save(dailyLog);
 
@@ -71,8 +70,7 @@ public class DailyLogService {
     ) {
         validateDateRange(from, to);
 
-        Pet pet = petRepository.findByIdWithGroup(petId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        Pet pet = findPet(petId);
         validatePetAccessible(userId, pet);
 
         List<DailyLog> dailyLogs = dailyLogRepository.findAllByPetIdAndRecordDateBetweenOrderByRecordDateAsc(
@@ -92,12 +90,10 @@ public class DailyLogService {
             final Long petId,
             final LocalDate recordDate
     ) {
-        Pet pet = petRepository.findByIdWithGroup(petId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        Pet pet = findPet(petId);
         validatePetAccessible(userId, pet);
 
-        DailyLog dailyLog = dailyLogRepository.findByPetIdAndRecordDate(petId, recordDate)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.DAILY_LOG_NOT_FOUND));
+        DailyLog dailyLog = findDailyLog(petId, recordDate);
 
         return DailyLogResponse.from(dailyLog);
     }
@@ -107,32 +103,30 @@ public class DailyLogService {
             final Long userId,
             final Long petId,
             final LocalDate recordDate,
-            final DailyLogUpdateRequest request
+            final DailyLogUpdateCommand command
     ) {
-        Pet pet = petRepository.findByIdWithGroup(petId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        Pet pet = findPet(petId);
         validatePetAccessible(userId, pet);
-        validateHasAnyValue(request);
 
-        DailyLog dailyLog = dailyLogRepository.findByPetIdAndRecordDate(petId, recordDate)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.DAILY_LOG_NOT_FOUND));
+        validateHasAnyValue(command);
 
+        DailyLog dailyLog = findDailyLog(petId, recordDate);
         dailyLog.update(
-                request.weightKg(),
-                request.mealAmountG(),
-                request.waterAmountMl(),
-                request.walkDistanceM(),
-                request.walkDurationMinutes(),
-                request.sleepDurationMinutes(),
-                request.stoolCount(),
-                request.urineCount(),
-                request.vomitCount(),
-                request.diarrheaCount(),
-                request.medicated(),
-                request.coughing(),
-                request.poorAppetite(),
-                request.lowActivity(),
-                request.abnormalNote()
+                command.weightKg(),
+                command.mealAmountG(),
+                command.waterAmountMl(),
+                command.walkDistanceM(),
+                command.walkDurationMinutes(),
+                command.sleepDurationMinutes(),
+                command.stoolCount(),
+                command.urineCount(),
+                command.vomitCount(),
+                command.diarrheaCount(),
+                command.medicated(),
+                command.coughing(),
+                command.poorAppetite(),
+                command.lowActivity(),
+                command.abnormalNote()
         );
 
         return DailyLogResponse.from(dailyLog);
@@ -144,14 +138,16 @@ public class DailyLogService {
             final Long petId,
             final LocalDate recordDate
     ) {
-        Pet pet = petRepository.findByIdWithGroup(petId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+        Pet pet = findPet(petId);
         validatePetAccessible(userId, pet);
 
-        DailyLog dailyLog = dailyLogRepository.findByPetIdAndRecordDate(petId, recordDate)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.DAILY_LOG_NOT_FOUND));
-
+        DailyLog dailyLog = findDailyLog(petId, recordDate);
         dailyLogRepository.delete(dailyLog);
+    }
+
+    private Pet findPet(final Long petId) {
+        return petRepository.findByIdWithGroup(petId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
     }
 
     private void validatePetAccessible(final Long userId, final Pet pet) {
@@ -167,20 +163,20 @@ public class DailyLogService {
         throw new DaengnyangException(ErrorCode.PET_NOT_FOUND);
     }
 
-    private void validateHasAnyValue(final DailyLogCreateRequest request) {
-        if (!request.hasAnyValue()) {
+    private void validateHasAnyValue(final DailyLogCreateCommand command) {
+        if (!command.hasAnyValue()) {
             throw new DaengnyangException(ErrorCode.INVALID_REQUEST);
         }
     }
 
-    private void validateHasAnyValue(final DailyLogUpdateRequest request) {
-        if (!request.hasAnyValue()) {
+    private void validateHasAnyValue(final DailyLogUpdateCommand command) {
+        if (!command.hasAnyValue()) {
             throw new DaengnyangException(ErrorCode.INVALID_REQUEST);
         }
     }
 
-    private void validateNotExists(final Long petId, final DailyLogCreateRequest request) {
-        if (dailyLogRepository.existsByPetIdAndRecordDate(petId, request.recordDate())) {
+    private void validateNotExists(final Long petId, final DailyLogCreateCommand command) {
+        if (dailyLogRepository.existsByPetIdAndRecordDate(petId, command.recordDate())) {
             throw new DaengnyangException(ErrorCode.DAILY_LOG_ALREADY_EXISTS);
         }
     }
@@ -189,5 +185,10 @@ public class DailyLogService {
         if (from.isAfter(to)) {
             throw new DaengnyangException(ErrorCode.INVALID_REQUEST);
         }
+    }
+
+    private DailyLog findDailyLog(final Long petId, final LocalDate recordDate) {
+        return dailyLogRepository.findByPetIdAndRecordDate(petId, recordDate)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.DAILY_LOG_NOT_FOUND));
     }
 }

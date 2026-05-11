@@ -1,5 +1,6 @@
 package com.geunnseung.daengnyangrefactor.dailylog.api.dto.request;
 
+import com.geunnseung.daengnyangrefactor.dailylog.service.command.DailyLogUpdateCommand;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -48,21 +49,23 @@ public record DailyLogUpdateRequest(
         String abnormalNote
 ) {
 
-    public boolean hasAnyValue() {
-        return weightKg != null
-                || mealAmountG != null
-                || waterAmountMl != null
-                || walkDistanceM != null
-                || walkDurationMinutes != null
-                || sleepDurationMinutes != null
-                || stoolCount != null
-                || urineCount != null
-                || vomitCount != null
-                || diarrheaCount != null
-                || medicated != null
-                || coughing != null
-                || poorAppetite != null
-                || lowActivity != null
-                || (abnormalNote != null && !abnormalNote.isBlank());
+    public DailyLogUpdateCommand toCommand() {
+        return new DailyLogUpdateCommand(
+                weightKg,
+                mealAmountG,
+                waterAmountMl,
+                walkDistanceM,
+                walkDurationMinutes,
+                sleepDurationMinutes,
+                stoolCount,
+                urineCount,
+                vomitCount,
+                diarrheaCount,
+                medicated,
+                coughing,
+                poorAppetite,
+                lowActivity,
+                abnormalNote
+        );
     }
 }
