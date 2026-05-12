@@ -78,8 +78,7 @@ public class ReportService {
 
     @Transactional
     public void generateWeeklyReports(final LocalDate baseDate) {
-        LocalDate periodStart = baseDate.minusWeeks(1)
-                .with(DayOfWeek.MONDAY);
+        LocalDate periodStart = getWeeklyPeriodStart(baseDate.minusWeeks(1));
         LocalDate periodEnd = periodStart.plusDays(6);
 
         generateReports(ReportType.WEEKLY, periodStart, periodEnd);
@@ -87,9 +86,8 @@ public class ReportService {
 
     @Transactional
     public void generateMonthlyReports(final LocalDate baseDate) {
-        LocalDate previousMonth = baseDate.minusMonths(1);
-        LocalDate periodStart = previousMonth.withDayOfMonth(1);
-        LocalDate periodEnd = previousMonth.withDayOfMonth(previousMonth.lengthOfMonth());
+        LocalDate periodStart = getMonthlyPeriodStart(baseDate.minusMonths(1));
+        LocalDate periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth());
 
         generateReports(ReportType.MONTHLY, periodStart, periodEnd);
     }
@@ -103,7 +101,7 @@ public class ReportService {
         Pet pet = findPetWithGroup(petId);
         validatePetAccessible(userId, pet);
 
-        LocalDate periodStart = date.with(DayOfWeek.MONDAY);
+        LocalDate periodStart = getWeeklyPeriodStart(date);
         LocalDate periodEnd = periodStart.plusDays(6);
 
         Report report = findReport(
@@ -125,8 +123,8 @@ public class ReportService {
         Pet pet = findPetWithGroup(petId);
         validatePetAccessible(userId, pet);
 
-        LocalDate periodStart = date.withDayOfMonth(1);
-        LocalDate periodEnd = date.withDayOfMonth(date.lengthOfMonth());
+        LocalDate periodStart = getMonthlyPeriodStart(date);
+        LocalDate periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth());
 
         Report report = findReport(
                 petId,
@@ -285,5 +283,13 @@ public class ReportService {
         return (int) recordedValues.stream()
                 .filter(Boolean::booleanValue)
                 .count();
+    }
+
+    private LocalDate getWeeklyPeriodStart(final LocalDate date) {
+        return date.with(DayOfWeek.MONDAY);
+    }
+
+    private LocalDate getMonthlyPeriodStart(final LocalDate date) {
+        return date.withDayOfMonth(1);
     }
 }
