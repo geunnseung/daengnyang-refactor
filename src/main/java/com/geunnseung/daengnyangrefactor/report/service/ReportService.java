@@ -12,12 +12,9 @@ import com.geunnseung.daengnyangrefactor.report.api.dto.response.ReportResponse;
 import com.geunnseung.daengnyangrefactor.report.domain.Report;
 import com.geunnseung.daengnyangrefactor.report.domain.ReportType;
 import com.geunnseung.daengnyangrefactor.report.repository.ReportRepository;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +28,7 @@ public class ReportService {
     private final DailyLogRepository dailyLogRepository;
     private final ReportRepository reportRepository;
     private final UserGroupRepository userGroupRepository;
+    private final ReportStatisticsCalculator reportStatisticsCalculator;
 
     @Transactional
     public ReportResponse createReport(
@@ -48,7 +46,7 @@ public class ReportService {
                 periodEnd
         );
 
-        ReportStatistics statistics = calculateStatistics(dailyLogs);
+        ReportStatistics statistics = reportStatisticsCalculator.calculate(dailyLogs);
 
         Report report = Report.create(
                 pet,
@@ -203,86 +201,6 @@ public class ReportService {
         }
 
         throw new DaengnyangException(ErrorCode.PET_NOT_FOUND);
-    }
-
-    private ReportStatistics calculateStatistics(final List<DailyLog> dailyLogs) {
-        return new ReportStatistics(
-                dailyLogs.size(),
-                average(dailyLogs.stream().map(DailyLog::getWeightKg).toList()),
-                averageInteger(dailyLogs.stream().map(DailyLog::getMealAmountG).toList()),
-                averageInteger(dailyLogs.stream().map(DailyLog::getWaterAmountMl).toList()),
-                sumInteger(dailyLogs.stream().map(DailyLog::getWalkDistanceM).toList()),
-                sumInteger(dailyLogs.stream().map(DailyLog::getWalkDurationMinutes).toList()),
-                averageInteger(dailyLogs.stream().map(DailyLog::getSleepDurationMinutes).toList()),
-                sumInteger(dailyLogs.stream().map(DailyLog::getStoolCount).toList()),
-                sumInteger(dailyLogs.stream().map(DailyLog::getUrineCount).toList()),
-                sumInteger(dailyLogs.stream().map(DailyLog::getVomitCount).toList()),
-                sumInteger(dailyLogs.stream().map(DailyLog::getDiarrheaCount).toList()),
-                countTrue(dailyLogs.stream().map(DailyLog::getMedicated).toList()),
-                countTrue(dailyLogs.stream().map(DailyLog::getCoughing).toList()),
-                countTrue(dailyLogs.stream().map(DailyLog::getPoorAppetite).toList()),
-                countTrue(dailyLogs.stream().map(DailyLog::getLowActivity).toList())
-        );
-    }
-
-    private BigDecimal average(final List<BigDecimal> values) {
-        List<BigDecimal> recordedValues = values.stream()
-                .filter(Objects::nonNull)
-                .toList();
-
-        if (recordedValues.isEmpty()) {
-            return null;
-        }
-
-        BigDecimal sum = recordedValues.stream()
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        return sum.divide(BigDecimal.valueOf(recordedValues.size()), 2, RoundingMode.HALF_UP);
-    }
-
-    private BigDecimal averageInteger(final List<Integer> values) {
-        List<Integer> recordedValues = values.stream()
-                .filter(Objects::nonNull)
-                .toList();
-
-        if (recordedValues.isEmpty()) {
-            return null;
-        }
-
-        int sum = recordedValues.stream()
-                .mapToInt(Integer::intValue)
-                .sum();
-
-        return BigDecimal.valueOf(sum)
-                .divide(BigDecimal.valueOf(recordedValues.size()), 2, RoundingMode.HALF_UP);
-    }
-
-    private Integer sumInteger(final List<Integer> values) {
-        List<Integer> recordedValues = values.stream()
-                .filter(Objects::nonNull)
-                .toList();
-
-        if (recordedValues.isEmpty()) {
-            return null;
-        }
-
-        return recordedValues.stream()
-                .mapToInt(Integer::intValue)
-                .sum();
-    }
-
-    private Integer countTrue(final List<Boolean> values) {
-        List<Boolean> recordedValues = values.stream()
-                .filter(Objects::nonNull)
-                .toList();
-
-        if (recordedValues.isEmpty()) {
-            return null;
-        }
-
-        return (int) recordedValues.stream()
-                .filter(Boolean::booleanValue)
-                .count();
     }
 
     private LocalDate getWeeklyPeriodStart(final LocalDate date) {
