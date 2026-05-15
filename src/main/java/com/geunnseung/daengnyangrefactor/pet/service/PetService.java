@@ -65,7 +65,7 @@ public class PetService {
             final Long petId,
             final PetGroupCreateCommand command
     ) {
-        Pet pet = findOwnedPet(userId, petId);
+        Pet pet = findOwnedPetForUpdate(userId, petId);
         validateGroupCreatable(pet);
 
         Group group = Group.create(
@@ -126,6 +126,11 @@ public class PetService {
 
     private Pet findOwnedPet(final Long userId, final Long petId) {
         return petRepository.findByIdAndOwnerIdAndDeletedAtIsNull(petId, userId)
+                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
+    }
+
+    private Pet findOwnedPetForUpdate(final Long userId, final Long petId) {
+        return petRepository.findOwnedPetForUpdate(userId, petId)
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
     }
 
