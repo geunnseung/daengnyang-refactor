@@ -53,6 +53,7 @@ public enum ErrorCode {
     // DailyLog
     DAILY_LOG_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 해당 날짜의 상태 기록이 있습니다."),
     DAILY_LOG_NOT_FOUND(HttpStatus.NOT_FOUND, "상태 기록을 찾을 수 없습니다."),
+    DAILY_LOG_CONFLICT(HttpStatus.CONFLICT, "건강 기록이 이미 다른 요청에 의해 변경되었습니다. 다시 조회한 뒤 수정해 주세요."),
 
     // Report
     REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 해당 기간의 리포트가 있습니다."),
