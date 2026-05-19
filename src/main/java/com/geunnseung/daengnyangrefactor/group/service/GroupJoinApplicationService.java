@@ -17,6 +17,7 @@ import com.geunnseung.daengnyangrefactor.user.domain.User;
 import com.geunnseung.daengnyangrefactor.user.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -115,7 +116,7 @@ public class GroupJoinApplicationService {
                 application.getRequester(),
                 application.getGroup()
         );
-        userGroupRepository.save(newMember);
+        saveUserGroup(newMember);
 
         return GroupJoinApplicationDecisionResponse.from(application);
     }
@@ -146,5 +147,13 @@ public class GroupJoinApplicationService {
         application.reject();
 
         return GroupJoinApplicationDecisionResponse.from(application);
+    }
+
+    private void saveUserGroup(final UserGroup userGroup) {
+        try {
+            userGroupRepository.save(userGroup);
+        } catch (DataIntegrityViolationException exception) {
+            throw new DaengnyangException(ErrorCode.ALREADY_GROUP_MEMBER, exception);
+        }
     }
 }
