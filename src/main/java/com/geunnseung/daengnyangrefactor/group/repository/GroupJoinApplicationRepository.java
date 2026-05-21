@@ -10,10 +10,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface GroupJoinApplicationRepository extends JpaRepository<GroupJoinApplication, Long> {
 
-    boolean existsByGroupIdAndRequesterIdAndStatus(
+    boolean existsByGroupIdAndRequesterId(
             final Long groupId,
-            final Long requesterId,
-            final GroupJoinApplicationStatus status
+            final Long requesterId
     );
 
     @Query("""

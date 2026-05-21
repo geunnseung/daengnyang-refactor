@@ -46,11 +46,7 @@ public class GroupJoinApplicationService {
             throw new DaengnyangException(ErrorCode.ALREADY_GROUP_MEMBER);
         }
 
-        if (groupJoinApplicationRepository.existsByGroupIdAndRequesterIdAndStatus(
-                groupId,
-                requesterId,
-                GroupJoinApplicationStatus.PENDING
-        )) {
+        if (groupJoinApplicationRepository.existsByGroupIdAndRequesterId(groupId, requesterId)) {
             throw new DaengnyangException(ErrorCode.GROUP_JOIN_APPLICATION_ALREADY_EXISTS);
         }
 
@@ -58,7 +54,7 @@ public class GroupJoinApplicationService {
                 group,
                 requester
         );
-        groupJoinApplicationRepository.save(application);
+        saveGroupJoinApplication(application);
 
         return GroupJoinApplicationCreateResponse.from(application);
     }
@@ -154,6 +150,14 @@ public class GroupJoinApplicationService {
             userGroupRepository.save(userGroup);
         } catch (DataIntegrityViolationException exception) {
             throw new DaengnyangException(ErrorCode.ALREADY_GROUP_MEMBER, exception);
+        }
+    }
+
+    private void saveGroupJoinApplication(final GroupJoinApplication application) {
+        try {
+            groupJoinApplicationRepository.saveAndFlush(application);
+        } catch (DataIntegrityViolationException exception) {
+            throw new DaengnyangException(ErrorCode.GROUP_JOIN_APPLICATION_ALREADY_EXISTS, exception);
         }
     }
 }

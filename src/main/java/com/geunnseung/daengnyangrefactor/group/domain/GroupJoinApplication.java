@@ -13,12 +13,21 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "group_join_applications")
+@Table(
+        name = "group_join_applications",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_group_join_applications_group_id_requester_id",
+                        columnNames = {"group_id", "requester_id"}
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class GroupJoinApplication extends BaseTimeEntity {
