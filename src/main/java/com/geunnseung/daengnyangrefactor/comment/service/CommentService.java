@@ -87,7 +87,7 @@ public class CommentService {
     }
 
     private PetPost findPetPost(final Long petPostId) {
-        return petPostRepository.findByIdAndDeletedAtIsNull(petPostId)
+        return petPostRepository.findWithPetAndOwnerAndGroupById(petPostId)
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_POST_NOT_FOUND));
     }
 
@@ -111,7 +111,7 @@ public class CommentService {
     }
 
     private Comment findComment(final Long petPostId, final Long commentId) {
-        return commentRepository.findByIdAndPetPostIdAndDeletedAtIsNull(
+        return commentRepository.findWithAuthorAndPetPostOwnerByIdAndPetPostId(
                         commentId,
                         petPostId
                 )

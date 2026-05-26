@@ -19,5 +19,19 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             """)
     List<Comment> findAllWithAuthorByPetPostId(@Param("petPostId") Long petPostId);
 
-    Optional<Comment> findByIdAndPetPostIdAndDeletedAtIsNull(Long id, Long petPostId);
+    @Query("""
+            select comment
+            from Comment comment
+            join fetch comment.author
+            join fetch comment.petPost petPost
+            join fetch petPost.pet pet
+            join fetch pet.owner
+            where comment.id = :commentId
+              and petPost.id = :petPostId
+              and comment.deletedAt is null
+            """)
+    Optional<Comment> findWithAuthorAndPetPostOwnerByIdAndPetPostId(
+            @Param("commentId") Long commentId,
+            @Param("petPostId") Long petPostId
+    );
 }
