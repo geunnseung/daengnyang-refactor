@@ -94,18 +94,13 @@ public class PetPostService {
     ) {
         findAccessiblePet(userId, petId);
 
-        List<PetPost> petPosts = petPostRepository.findAllByPetIdAndRecordDateAndDeletedAtIsNullOrderByCreatedAtAsc(
+        List<PetPostFile> files = petPostFileRepository.findAllWithPetPostAndAuthorByPetIdAndRecordDate(
                 petId,
                 recordDate
         );
 
-        List<PetPostDetailResponse> posts = petPosts.stream()
-                .map(petPost -> {
-                    PetPostFile file = petPostFileRepository.findByPetPostId(petPost.getId())
-                            .orElseThrow(() -> new DaengnyangException(ErrorCode.FILE_NOT_FOUND));
-
-                    return PetPostDetailResponse.of(petPost, file);
-                })
+        List<PetPostDetailResponse> posts = files.stream()
+                .map(file -> PetPostDetailResponse.of(file.getPetPost(), file))
                 .toList();
 
         return PetPostDailyResponse.of(recordDate, posts);
