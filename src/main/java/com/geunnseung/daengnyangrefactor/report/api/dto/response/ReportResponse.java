@@ -31,10 +31,13 @@ public record ReportResponse(
         LocalDateTime createdAt
 ) {
 
-    public static ReportResponse from(final Report report) {
+    public static ReportResponse of(
+            final Report report,
+            final Long petId
+    ) {
         return new ReportResponse(
                 report.getId(),
-                report.getPet().getId(),
+                petId,
                 report.getType(),
                 report.getPeriodStart(),
                 report.getPeriodEnd(),

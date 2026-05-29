@@ -71,7 +71,7 @@ public class ReportService {
         );
         reportRepository.save(report);
 
-        return ReportResponse.from(report);
+        return ReportResponse.of(report, petId);
     }
 
     @Transactional
@@ -109,7 +109,7 @@ public class ReportService {
                 periodEnd
         );
 
-        return ReportResponse.from(report);
+        return ReportResponse.of(report, petId);
     }
 
     @Transactional(readOnly = true)
@@ -131,7 +131,7 @@ public class ReportService {
                 periodEnd
         );
 
-        return ReportResponse.from(report);
+        return ReportResponse.of(report, petId);
     }
 
     private Pet findPet(final Long petId) {
