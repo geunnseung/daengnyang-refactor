@@ -31,50 +31,6 @@ public class ReportService {
     private final ReportStatisticsCalculator reportStatisticsCalculator;
 
     @Transactional
-    public ReportResponse createReport(
-            final Long petId,
-            final ReportType type,
-            final LocalDate periodStart,
-            final LocalDate periodEnd
-    ) {
-        Pet pet = findPet(petId);
-        validateNotExists(petId, type, periodStart, periodEnd);
-
-        List<DailyLog> dailyLogs = dailyLogRepository.findAllByPetIdAndRecordDateBetweenOrderByRecordDateAsc(
-                petId,
-                periodStart,
-                periodEnd
-        );
-
-        ReportStatistics statistics = reportStatisticsCalculator.calculate(dailyLogs);
-
-        Report report = Report.create(
-                pet,
-                type,
-                periodStart,
-                periodEnd,
-                statistics.recordedDays(),
-                statistics.averageWeightKg(),
-                statistics.averageMealAmountG(),
-                statistics.averageWaterAmountMl(),
-                statistics.totalWalkDistanceM(),
-                statistics.totalWalkDurationMinutes(),
-                statistics.averageSleepDurationMinutes(),
-                statistics.totalStoolCount(),
-                statistics.totalUrineCount(),
-                statistics.totalVomitCount(),
-                statistics.totalDiarrheaCount(),
-                statistics.medicatedDays(),
-                statistics.coughingDays(),
-                statistics.poorAppetiteDays(),
-                statistics.lowActivityDays()
-        );
-        reportRepository.save(report);
-
-        return ReportResponse.of(report, petId);
-    }
-
-    @Transactional
     public void generateWeeklyReports(final LocalDate baseDate) {
         LocalDate periodStart = getWeeklyPeriodStart(baseDate.minusWeeks(1));
         LocalDate periodEnd = periodStart.plusDays(6);
@@ -134,11 +90,6 @@ public class ReportService {
         return ReportResponse.of(report, petId);
     }
 
-    private Pet findPet(final Long petId) {
-        return petRepository.findById(petId)
-                .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
-    }
-
     private Pet findPetWithGroup(final Long petId) {
         return petRepository.findByIdWithGroup(petId)
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_NOT_FOUND));
@@ -157,37 +108,6 @@ public class ReportService {
                         periodEnd
                 )
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.REPORT_NOT_FOUND));
-    }
-
-    private void generateReports(
-            final ReportType type,
-            final LocalDate periodStart,
-            final LocalDate periodEnd
-    ) {
-        List<Pet> pets = petRepository.findAll();
-        for (Pet pet : pets) {
-            if (reportRepository.existsByPetIdAndTypeAndPeriodStartAndPeriodEnd(
-                    pet.getId(),
-                    type,
-                    periodStart,
-                    periodEnd
-            )) {
-                continue;
-            }
-
-            createReport(pet.getId(), type, periodStart, periodEnd);
-        }
-    }
-
-    private void validateNotExists(
-            final Long petId,
-            final ReportType type,
-            final LocalDate periodStart,
-            final LocalDate periodEnd
-    ) {
-        if (reportRepository.existsByPetIdAndTypeAndPeriodStartAndPeriodEnd(petId, type, periodStart, periodEnd)) {
-            throw new DaengnyangException(ErrorCode.REPORT_ALREADY_EXISTS);
-        }
     }
 
     private void validatePetAccessible(final Long userId, final Pet pet) {
@@ -209,5 +129,69 @@ public class ReportService {
 
     private LocalDate getMonthlyPeriodStart(final LocalDate date) {
         return date.withDayOfMonth(1);
+    }
+
+    private void generateReports(
+            final ReportType type,
+            final LocalDate periodStart,
+            final LocalDate periodEnd
+    ) {
+        List<Pet> pets = petRepository.findAll();
+
+        for (Pet pet : pets) {
+            if (reportRepository.existsByPetIdAndTypeAndPeriodStartAndPeriodEnd(
+                    pet.getId(),
+                    type,
+                    periodStart,
+                    periodEnd
+            )) {
+                continue;
+            }
+
+            saveReport(
+                    pet,
+                    type,
+                    periodStart,
+                    periodEnd
+            );
+        }
+    }
+
+    private Report saveReport(
+            final Pet pet,
+            final ReportType type,
+            final LocalDate periodStart,
+            final LocalDate periodEnd
+    ) {
+        List<DailyLog> dailyLogs = dailyLogRepository.findAllByPetIdAndRecordDateBetweenOrderByRecordDateAsc(
+                pet.getId(),
+                periodStart,
+                periodEnd
+        );
+
+        ReportStatistics statistics = reportStatisticsCalculator.calculate(dailyLogs);
+
+        Report report = Report.create(
+                pet,
+                type,
+                periodStart,
+                periodEnd,
+                statistics.recordedDays(),
+                statistics.averageWeightKg(),
+                statistics.averageMealAmountG(),
+                statistics.averageWaterAmountMl(),
+                statistics.totalWalkDistanceM(),
+                statistics.totalWalkDurationMinutes(),
+                statistics.averageSleepDurationMinutes(),
+                statistics.totalStoolCount(),
+                statistics.totalUrineCount(),
+                statistics.totalVomitCount(),
+                statistics.totalDiarrheaCount(),
+                statistics.medicatedDays(),
+                statistics.coughingDays(),
+                statistics.poorAppetiteDays(),
+                statistics.lowActivityDays()
+        );
+        return reportRepository.save(report);
     }
 }
