@@ -1,6 +1,7 @@
 package com.geunnseung.daengnyangrefactor.global.domain;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import java.time.LocalDateTime;
 import lombok.Getter;
@@ -11,7 +12,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @Getter
 @MappedSuperclass
-@EnableJpaAuditing(AuditingEntityListener.class)
+@EntityListeners(AuditingEntityListener.class)
 public abstract class BaseTimeEntity {
 
     @CreatedDate

@@ -18,6 +18,7 @@ import com.geunnseung.daengnyangrefactor.petpost.domain.PetPostFile;
 import com.geunnseung.daengnyangrefactor.petpost.domain.PetPostFileType;
 import com.geunnseung.daengnyangrefactor.petpost.repository.PetPostFileRepository;
 import com.geunnseung.daengnyangrefactor.petpost.repository.PetPostRepository;
+import com.geunnseung.daengnyangrefactor.petpost.service.command.PetPostCreateCommand;
 import com.geunnseung.daengnyangrefactor.user.domain.User;
 import com.geunnseung.daengnyangrefactor.user.repository.UserRepository;
 import java.time.LocalDate;
@@ -58,7 +59,7 @@ public class PetPostService {
     public PetPostCreateResponse createPetPost(
             final Long userId,
             final Long petId,
-            final PetPostCreateRequest request,
+            final PetPostCreateCommand command,
             final MultipartFile file
     ) {
         Pet pet = findAccessiblePet(userId, petId);
@@ -68,7 +69,7 @@ public class PetPostService {
         PetPostFileType fileType = resolveFileType(file);
         validateFileSize(fileType, file);
 
-        PetPost petPost = PetPost.create(pet, user, request.recordDate(), request.content());
+        PetPost petPost = PetPost.create(pet, user, command.recordDate(), command.content());
         petPostRepository.save(petPost);
 
         MediaUploadResult uploadResult = uploadPetPostFile(pet, petPost, file);
