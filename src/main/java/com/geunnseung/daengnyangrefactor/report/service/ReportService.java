@@ -1,7 +1,5 @@
 package com.geunnseung.daengnyangrefactor.report.service;
 
-import com.geunnseung.daengnyangrefactor.dailylog.domain.DailyLog;
-import com.geunnseung.daengnyangrefactor.dailylog.repository.DailyLogRepository;
 import com.geunnseung.daengnyangrefactor.global.exception.DaengnyangException;
 import com.geunnseung.daengnyangrefactor.global.exception.ErrorCode;
 import com.geunnseung.daengnyangrefactor.group.domain.Group;
@@ -12,9 +10,14 @@ import com.geunnseung.daengnyangrefactor.report.api.dto.response.ReportResponse;
 import com.geunnseung.daengnyangrefactor.report.domain.Report;
 import com.geunnseung.daengnyangrefactor.report.domain.ReportType;
 import com.geunnseung.daengnyangrefactor.report.repository.ReportRepository;
+import com.geunnseung.daengnyangrefactor.report.repository.ReportStatisticsQueryRepository;
+import com.geunnseung.daengnyangrefactor.report.repository.ReportStatisticsResult;
+import jakarta.persistence.EntityManager;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,10 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class ReportService {
 
     private final PetRepository petRepository;
-    private final DailyLogRepository dailyLogRepository;
     private final ReportRepository reportRepository;
     private final UserGroupRepository userGroupRepository;
-    private final ReportStatisticsCalculator reportStatisticsCalculator;
+    private final ReportStatisticsQueryRepository reportStatisticsQueryRepository;
+    private final EntityManager entityManager;
 
     @Transactional
     public void generateWeeklyReports(final LocalDate baseDate) {
@@ -136,62 +139,51 @@ public class ReportService {
             final LocalDate periodStart,
             final LocalDate periodEnd
     ) {
-        List<Pet> pets = petRepository.findAll();
+        List<ReportStatisticsResult> statisticsResults =
+                reportStatisticsQueryRepository.findAllByRecordDateBetween(periodStart, periodEnd);
 
-        for (Pet pet : pets) {
-            if (reportRepository.existsByPetIdAndTypeAndPeriodStartAndPeriodEnd(
-                    pet.getId(),
-                    type,
-                    periodStart,
-                    periodEnd
-            )) {
+        Set<Long> existingReportPetIds = new HashSet<>(
+                reportRepository.findPetIdsByTypeAndPeriod(type, periodStart, periodEnd)
+        );
+
+        for (ReportStatisticsResult result : statisticsResults) {
+            if (existingReportPetIds.contains(result.petId())) {
                 continue;
             }
 
-            saveReport(
-                    pet,
-                    type,
-                    periodStart,
-                    periodEnd
-            );
+            saveReport(result, type, periodStart, periodEnd);
         }
     }
 
-    private Report saveReport(
-            final Pet pet,
+    private void saveReport(
+            final ReportStatisticsResult result,
             final ReportType type,
             final LocalDate periodStart,
             final LocalDate periodEnd
     ) {
-        List<DailyLog> dailyLogs = dailyLogRepository.findAllByPetIdAndRecordDateBetweenOrderByRecordDateAsc(
-                pet.getId(),
-                periodStart,
-                periodEnd
-        );
-
-        ReportStatistics statistics = reportStatisticsCalculator.calculate(dailyLogs);
+        Pet pet = entityManager.getReference(Pet.class, result.petId());
 
         Report report = Report.create(
                 pet,
                 type,
                 periodStart,
                 periodEnd,
-                statistics.recordedDays(),
-                statistics.averageWeightKg(),
-                statistics.averageMealAmountG(),
-                statistics.averageWaterAmountMl(),
-                statistics.totalWalkDistanceM(),
-                statistics.totalWalkDurationMinutes(),
-                statistics.averageSleepDurationMinutes(),
-                statistics.totalStoolCount(),
-                statistics.totalUrineCount(),
-                statistics.totalVomitCount(),
-                statistics.totalDiarrheaCount(),
-                statistics.medicatedDays(),
-                statistics.coughingDays(),
-                statistics.poorAppetiteDays(),
-                statistics.lowActivityDays()
+                result.recordedDays(),
+                result.averageWeightKg(),
+                result.averageMealAmountG(),
+                result.averageWaterAmountMl(),
+                result.totalWalkDistanceM(),
+                result.totalWalkDurationMinutes(),
+                result.averageSleepDurationMinutes(),
+                result.totalStoolCount(),
+                result.totalUrineCount(),
+                result.totalVomitCount(),
+                result.totalDiarrheaCount(),
+                result.medicatedDays(),
+                result.coughingDays(),
+                result.poorAppetiteDays(),
+                result.lowActivityDays()
         );
-        return reportRepository.save(report);
+        reportRepository.save(report);
     }
 }
