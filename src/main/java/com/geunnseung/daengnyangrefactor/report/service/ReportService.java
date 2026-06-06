@@ -9,10 +9,10 @@ import com.geunnseung.daengnyangrefactor.pet.repository.PetRepository;
 import com.geunnseung.daengnyangrefactor.report.api.dto.response.ReportResponse;
 import com.geunnseung.daengnyangrefactor.report.domain.Report;
 import com.geunnseung.daengnyangrefactor.report.domain.ReportType;
+import com.geunnseung.daengnyangrefactor.report.repository.ReportJdbcRepository;
 import com.geunnseung.daengnyangrefactor.report.repository.ReportRepository;
 import com.geunnseung.daengnyangrefactor.report.repository.ReportStatisticsQueryRepository;
 import com.geunnseung.daengnyangrefactor.report.repository.ReportStatisticsResult;
-import jakarta.persistence.EntityManager;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -31,7 +31,7 @@ public class ReportService {
     private final ReportRepository reportRepository;
     private final UserGroupRepository userGroupRepository;
     private final ReportStatisticsQueryRepository reportStatisticsQueryRepository;
-    private final EntityManager entityManager;
+    private final ReportJdbcRepository reportJdbcRepository;
 
     @Transactional
     public void generateWeeklyReports(final LocalDate baseDate) {
@@ -146,44 +146,10 @@ public class ReportService {
                 reportRepository.findPetIdsByTypeAndPeriod(type, periodStart, periodEnd)
         );
 
-        for (ReportStatisticsResult result : statisticsResults) {
-            if (existingReportPetIds.contains(result.petId())) {
-                continue;
-            }
+        List<ReportStatisticsResult> insertTargets = statisticsResults.stream()
+                .filter(result -> !existingReportPetIds.contains(result.petId()))
+                .toList();
 
-            saveReport(result, type, periodStart, periodEnd);
-        }
-    }
-
-    private void saveReport(
-            final ReportStatisticsResult result,
-            final ReportType type,
-            final LocalDate periodStart,
-            final LocalDate periodEnd
-    ) {
-        Pet pet = entityManager.getReference(Pet.class, result.petId());
-
-        Report report = Report.create(
-                pet,
-                type,
-                periodStart,
-                periodEnd,
-                result.recordedDays(),
-                result.averageWeightKg(),
-                result.averageMealAmountG(),
-                result.averageWaterAmountMl(),
-                result.totalWalkDistanceM(),
-                result.totalWalkDurationMinutes(),
-                result.averageSleepDurationMinutes(),
-                result.totalStoolCount(),
-                result.totalUrineCount(),
-                result.totalVomitCount(),
-                result.totalDiarrheaCount(),
-                result.medicatedDays(),
-                result.coughingDays(),
-                result.poorAppetiteDays(),
-                result.lowActivityDays()
-        );
-        reportRepository.save(report);
+        reportJdbcRepository.batchInsert(insertTargets, type, periodStart, periodEnd);
     }
 }

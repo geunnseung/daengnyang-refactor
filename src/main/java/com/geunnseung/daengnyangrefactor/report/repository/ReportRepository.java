@@ -11,13 +11,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface ReportRepository extends JpaRepository<Report, Long> {
 
-    boolean existsByPetIdAndTypeAndPeriodStartAndPeriodEnd(
-            Long petId,
-            ReportType type,
-            LocalDate periodStart,
-            LocalDate periodEnd
-    );
-
     Optional<Report> findByPetIdAndTypeAndPeriodStartAndPeriodEnd(
             Long petId,
             ReportType type,
