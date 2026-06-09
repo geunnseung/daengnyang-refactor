@@ -23,9 +23,9 @@ public class DailyPetPostPerformanceTest {
     private static final Long TARGET_PET_ID = 1L;
     private static final LocalDate TARGET_DATE = LocalDate.of(2026, 6, 8);
 
-    private static final int PET_COUNT = 50;
-    private static final int DAYS = 100;
-    private static final int POSTS_PER_DAY = 10;
+    private static final int PET_COUNT = 10;
+    private static final int DAYS = 1000;
+    private static final int POSTS_PER_DAY = 30;
 
     @Autowired
     private PetPostService petPostService;
@@ -124,8 +124,8 @@ public class DailyPetPostPerformanceTest {
         List<Object[]> postRows = new ArrayList<>();
         List<Object[]> fileRows = new ArrayList<>();
 
-        LocalDate startDate = LocalDate.of(2026, 3, 1);
-        LocalDateTime baseTime = LocalDateTime.of(2026, 3, 1, 0, 0);
+        LocalDate startDate = LocalDate.of(2024, 1, 1);
+        LocalDateTime baseTime = LocalDateTime.of(2024, 1, 1, 0, 0);
 
         long postId = 1L;
         long fileId = 1L;

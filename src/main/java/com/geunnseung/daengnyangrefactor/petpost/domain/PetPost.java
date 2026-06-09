@@ -9,6 +9,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -19,7 +20,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "pet_posts")
+@Table(
+        name = "pet_posts",
+        indexes = {
+                @Index(
+                        name = "idx_pet_posts_pet_record_deleted_created_id",
+                        columnList = "pet_id, record_date, deleted_at, created_at, id"
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class PetPost extends BaseTimeEntity {
