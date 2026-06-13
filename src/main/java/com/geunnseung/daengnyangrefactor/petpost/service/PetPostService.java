@@ -9,7 +9,6 @@ import com.geunnseung.daengnyangrefactor.group.domain.Group;
 import com.geunnseung.daengnyangrefactor.group.repository.UserGroupRepository;
 import com.geunnseung.daengnyangrefactor.pet.domain.Pet;
 import com.geunnseung.daengnyangrefactor.pet.repository.PetRepository;
-import com.geunnseung.daengnyangrefactor.petpost.api.dto.request.PetPostCreateRequest;
 import com.geunnseung.daengnyangrefactor.petpost.api.dto.response.PetPostCreateResponse;
 import com.geunnseung.daengnyangrefactor.petpost.api.dto.response.PetPostDailyResponse;
 import com.geunnseung.daengnyangrefactor.petpost.api.dto.response.PetPostDetailResponse;
@@ -18,6 +17,7 @@ import com.geunnseung.daengnyangrefactor.petpost.domain.PetPostFile;
 import com.geunnseung.daengnyangrefactor.petpost.domain.PetPostFileType;
 import com.geunnseung.daengnyangrefactor.petpost.repository.PetPostFileRepository;
 import com.geunnseung.daengnyangrefactor.petpost.repository.PetPostRepository;
+import com.geunnseung.daengnyangrefactor.petpost.service.cache.PetPostDailyCache;
 import com.geunnseung.daengnyangrefactor.petpost.service.command.PetPostCreateCommand;
 import com.geunnseung.daengnyangrefactor.user.domain.User;
 import com.geunnseung.daengnyangrefactor.user.repository.UserRepository;
@@ -54,6 +54,7 @@ public class PetPostService {
     private final PetPostRepository petPostRepository;
     private final PetPostFileRepository petPostFileRepository;
     private final MediaStoragePort mediaStoragePort;
+    private final PetPostDailyCache petPostDailyCache;
 
     @Transactional
     public PetPostCreateResponse createPetPost(
@@ -84,6 +85,8 @@ public class PetPostService {
         );
         petPostFileRepository.save(petPostFile);
 
+        cacheTodayPosts(pet.getId(), command.recordDate());
+
         return PetPostCreateResponse.of(petPost, petPostFile);
     }
 
@@ -95,16 +98,12 @@ public class PetPostService {
     ) {
         findAccessiblePet(userId, petId);
 
-        List<PetPostFile> files = petPostFileRepository.findAllWithPetPostAndAuthorByPetIdAndRecordDate(
-                petId,
-                recordDate
-        );
+        if (isToday(recordDate)) {
+            return petPostDailyCache.find(petId, recordDate)
+                    .orElseGet(() -> loadTodayPosts(petId, recordDate));
+        }
 
-        List<PetPostDetailResponse> posts = files.stream()
-                .map(file -> PetPostDetailResponse.of(file.getPetPost(), file))
-                .toList();
-
-        return PetPostDailyResponse.of(recordDate, posts);
+        return loadPosts(petId, recordDate);
     }
 
     @Transactional
@@ -120,8 +119,8 @@ public class PetPostService {
                 .orElseThrow(() -> new DaengnyangException(ErrorCode.PET_POST_NOT_FOUND));
 
         validateDeletable(userId, petPost);
-
         petPost.delete();
+        evictTodayPosts(petId, petPost.getRecordDate());
     }
 
     private Pet findAccessiblePet(final Long userId, final Long petId) {
@@ -211,5 +210,56 @@ public class PetPostService {
         }
 
         throw new DaengnyangException(ErrorCode.PET_POST_ACCESS_DENIED);
+    }
+
+    private PetPostDailyResponse loadTodayPosts(
+            final Long petId,
+            final LocalDate recordDate
+    ) {
+        PetPostDailyResponse response = loadPosts(petId, recordDate);
+        petPostDailyCache.put(petId, recordDate, response);
+
+        return response;
+    }
+
+    private PetPostDailyResponse loadPosts(
+            final Long petId,
+            final LocalDate recordDate
+    ) {
+        List<PetPostFile> files = petPostFileRepository.findAllWithPetPostAndAuthorByPetIdAndRecordDate(
+                petId,
+                recordDate
+        );
+
+        List<PetPostDetailResponse> posts = files.stream()
+                .map(file -> PetPostDetailResponse.of(file.getPetPost(), file))
+                .toList();
+
+        return PetPostDailyResponse.of(recordDate, posts);
+    }
+
+    private void cacheTodayPosts(
+            final Long petId,
+            final LocalDate recordDate
+    ) {
+        if (!isToday(recordDate)) {
+            return;
+        }
+
+        PetPostDailyResponse response = loadPosts(petId, recordDate);
+        petPostDailyCache.put(petId, recordDate, response);
+    }
+
+    private void evictTodayPosts(
+            final Long petId,
+            final LocalDate recordDate
+    ) {
+        if (isToday(recordDate)) {
+            petPostDailyCache.evict(petId, recordDate);
+        }
+    }
+
+    private boolean isToday(final LocalDate recordDate) {
+        return LocalDate.now().equals(recordDate);
     }
 }
