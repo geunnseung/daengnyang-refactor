@@ -18,6 +18,8 @@ import com.geunnseung.daengnyangrefactor.petpost.domain.PetPostFileType;
 import com.geunnseung.daengnyangrefactor.petpost.repository.PetPostFileRepository;
 import com.geunnseung.daengnyangrefactor.petpost.repository.PetPostRepository;
 import com.geunnseung.daengnyangrefactor.petpost.service.cache.PetPostDailyCache;
+import com.geunnseung.daengnyangrefactor.petpost.service.cache.PetPostDailyCacheEvictEvent;
+import com.geunnseung.daengnyangrefactor.petpost.service.cache.PetPostDailyCacheRefreshEvent;
 import com.geunnseung.daengnyangrefactor.petpost.service.command.PetPostCreateCommand;
 import com.geunnseung.daengnyangrefactor.user.domain.User;
 import com.geunnseung.daengnyangrefactor.user.repository.UserRepository;
@@ -25,6 +27,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -55,6 +58,7 @@ public class PetPostService {
     private final PetPostFileRepository petPostFileRepository;
     private final MediaStoragePort mediaStoragePort;
     private final PetPostDailyCache petPostDailyCache;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PetPostCreateResponse createPetPost(
@@ -85,7 +89,7 @@ public class PetPostService {
         );
         petPostFileRepository.save(petPostFile);
 
-        cacheTodayPosts(pet.getId(), command.recordDate());
+        publishTodayPostsCacheRefresh(pet.getId(), command.recordDate());
 
         return PetPostCreateResponse.of(petPost, petPostFile);
     }
@@ -120,7 +124,7 @@ public class PetPostService {
 
         validateDeletable(userId, petPost);
         petPost.delete();
-        evictTodayPosts(petId, petPost.getRecordDate());
+        publishTodayPostsCacheEviction(petId, petPost.getRecordDate());
     }
 
     private Pet findAccessiblePet(final Long userId, final Long petId) {
@@ -238,7 +242,7 @@ public class PetPostService {
         return PetPostDailyResponse.of(recordDate, posts);
     }
 
-    private void cacheTodayPosts(
+    private void publishTodayPostsCacheRefresh(
             final Long petId,
             final LocalDate recordDate
     ) {
@@ -246,17 +250,18 @@ public class PetPostService {
             return;
         }
 
-        PetPostDailyResponse response = loadPosts(petId, recordDate);
-        petPostDailyCache.put(petId, recordDate, response);
+        eventPublisher.publishEvent(new PetPostDailyCacheRefreshEvent(petId, recordDate));
     }
 
-    private void evictTodayPosts(
+    private void publishTodayPostsCacheEviction(
             final Long petId,
             final LocalDate recordDate
     ) {
-        if (isToday(recordDate)) {
-            petPostDailyCache.evict(petId, recordDate);
+        if (!isToday(recordDate)) {
+            return;
         }
+
+        eventPublisher.publishEvent(new PetPostDailyCacheEvictEvent(petId, recordDate));
     }
 
     private boolean isToday(final LocalDate recordDate) {
