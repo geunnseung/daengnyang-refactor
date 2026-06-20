@@ -132,4 +132,3 @@ pet_id, record_date, deleted_at, created_at, id
   - 생성/삭제 요청: 이벤트만 발행
   - 커밋 이후: 캐시 갱신/삭제
   - 캐시 동기화: 별도 스레드에서 비동기 처리
-  - 
