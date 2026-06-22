@@ -132,3 +132,29 @@ pet_id, record_date, deleted_at, created_at, id
   - 생성/삭제 요청: 이벤트만 발행
   - 커밋 이후: 캐시 갱신/삭제
   - 캐시 동기화: 별도 스레드에서 비동기 처리
+
+### 5️⃣ `Report` 통계 생성 스케줄러 처리
+
+#### ❗ 문제 확인
+
+주간·월간 `Report`는 모든 반려동물의 `DailyLog`를 통계로 생성하는 작업으로, 
+API 요청 시점에 처리하면 집계 대상 데이터가 많아질수록 응답 시간이 길어져 사용자가 기다려야 하는 문제가 있습니다
+
+또한 `Report`는 실시간 생성보다 정해진 주기마다 생성해도 충분한 데이터이므로, 요청과 분리된 배치성 작업으로 처리하는 것이 적합하다고 판단했습니다
+
+#### ✅ 해결
+
+`Spring Scheduler`를 사용해 주간·월간 `Report`를 정해진 시점에 자동 생성하도록 처리했습니다
+
+```java
+@Scheduled(cron = "0 0 0 * * MON")
+public void generateWeeklyReports() {
+    reportService.generateWeeklyReports(LocalDate.now());
+}
+
+@Scheduled(cron = "0 0 1 1 * *")
+public void generateMonthlyReports() {
+    reportService.generateMonthlyReports(LocalDate.now());
+}
+```
+사용자는 이미 생성된 리포트를 조회하기만 하면 되므로, 무거운 통계 집계 작업을 사용자 요청 흐름에서 분리할 수 있었습니다
